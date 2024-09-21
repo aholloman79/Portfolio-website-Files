@@ -1,0 +1,44 @@
+---
+title: "part2"
+author: "Avery Holloman"
+date: "2024-08-23"
+output: html_document
+---
+
+```{r}
+
+library(imager)
+library(ggplot2)
+
+# Define the path to your image
+img_path <- "C:/Users/jacob/OneDrive/Desktop/Project X/R Studio Images/Screenshot 2024-08-19 074934.png"
+
+# Load the image
+img <- load.image(img_path)
+
+# Display the image
+plot(img, main="Loaded Image")
+
+# Convert the image to a data frame of pixel values
+img_data <- as.data.frame(img, wide = "c")  # 'wide = "c"' keeps RGB channels separate
+
+# Define a simple affine transformation matrix (scaling + translation)
+transformation_matrix <- matrix(c(1, 0, 20,   # x' = x + 20 (translation)
+                                  0, 1, 20),  # y' = y + 20 (translation)
+                                nrow = 2, byrow = TRUE)
+
+# Apply the affine transformation to the x and y coordinates
+img_data_transformed <- img_data
+img_data_transformed$x <- transformation_matrix[1,1] * img_data$x + transformation_matrix[1,2] * img_data$y + transformation_matrix[1,3]
+img_data_transformed$y <- transformation_matrix[2,1] * img_data$x + transformation_matrix[2,2] * img_data$y + transformation_matrix[2,3]
+
+# Plot the transformed image using small points
+ggplot(img_data_transformed, aes(x = x, y = y, color = rgb(c.1, c.2, c.3))) +
+  geom_point(size = 0.1) +  # Small points
+  scale_color_identity() +  # Use the RGB colors as is
+  coord_fixed() +           # Keep the aspect ratio fixed
+  theme_void() +            # Remove axis labels and ticks
+  ggtitle("Transformed Image with Affine Transformation")
+
+
+```

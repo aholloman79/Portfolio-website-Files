@@ -1,0 +1,90 @@
+---
+title: "Excel"
+author: "Avery Holloman"
+date: "2024-09-02"
+output: html_document
+---
+
+```{r}
+# Install and load required packages
+install.packages("writexl")
+install.packages("dplyr")
+install.packages("openxlsx")
+
+library(writexl)
+library(dplyr)
+library(openxlsx)
+
+# Generate data for the Excel worksheet
+set.seed(123)  # For reproducibility
+
+# Create employee names
+employee_names <- c("Alice Johnson", "Bob Smith", "Charlie Davis", "David Evans", "Eve Williams", "Frank Miller", 
+                    "Grace Wilson", "Hannah Clark", "Isaac Young", "Jack White", "Karen Green", "Leo Brown", 
+                    "Mona Lee", "Nathan Harris", "Olivia King", "Paul Wright", "Quincy Turner", "Rachel Scott", 
+                    "Steve Adams", "Tina Baker", "Uma Cooper", "Victor Moore", "Wendy Phillips", "Xander Thompson", 
+                    "Yara Lewis", "Zack Martinez", "Amy Nelson", "Brian Reed", "Cindy Carter", "Derek Allen", 
+                    "Ella Walker", "Fiona Hill", "George Roberts", "Helen Campbell", "Ian Rogers", "Julia Mitchell", 
+                    "Kevin Bryant", "Laura Perez", "Mark Sanchez", "Nina Price", "Oscar Rivera", "Patricia Morgan", 
+                    "Quinn Ross", "Ronald Hughes", "Susan Powell", "Timothy Foster", "Ursula Butler", "Violet Flores", 
+                    "Will Harris")
+
+# Duplicate names to match the required length
+employee_names <- rep(employee_names, length.out = 100)
+
+# Positions, Departments, and Blocks
+positions <- c("Cashier", "Chef", "Manager", "Delivery Driver", "Customer Service", "Barista", "Waiter", "Cook", "Host", "Cleaner")
+departments <- c("Sales", "Kitchen", "Administration", "Logistics", "Support", "Service", "Operations", "Catering", "Front Desk", "Maintenance")
+blocks <- c("East", "West", "North", "South")
+
+# Generate additional realistic data
+df <- data.frame(
+  Employee_Name = employee_names,
+  Position = sample(positions, 100, replace = TRUE),
+  Department = sample(departments, 100, replace = TRUE),
+  Block = sample(blocks, 100, replace = TRUE),
+  Sales_Target = sample(5000:10000, 100, replace = TRUE),
+  Experience_Years = sample(1:20, 100, replace = TRUE),
+  Performance_Rating = round(runif(100, 1, 5), 1),
+  Base_Salary = sample(30000:80000, 100, replace = TRUE),
+  Bonus_Percentage = round(runif(100, 5, 20), 1)
+)
+
+# Create formulas for calculated columns
+df <- df %>%
+  mutate(
+    Total_Compensation = Base_Salary + (Base_Salary * Bonus_Percentage / 100),  # Base Salary plus Bonus
+    Adjusted_Sales_Target = Sales_Target * (Performance_Rating / 5)  # Adjusted Sales Target based on Performance
+  )
+
+# Create Excel workbook
+wb <- createWorkbook()
+
+# Add worksheet
+addWorksheet(wb, "Employee Data")
+
+# Write data to Excel worksheet
+writeData(wb, sheet = "Employee Data", df)
+
+# Add dynamic array formula for unique departments
+writeFormula(wb, "Employee Data", x = "=UNIQUE(E2:E101)", startCol = 15, startRow = 2) # Unique departments
+
+# Add dynamic array formula for sorted employees
+writeFormula(wb, "Employee Data", x = "=SORT(A2:A101)", startCol = 16, startRow = 2) # Sorted employee names
+
+# Add filter formula based on department
+writeFormula(wb, "Employee Data", x = "=FILTER(A2:F101, C2:C101 = 'Sales')", startCol = 17, startRow = 2) # Filter employees in Sales
+
+# Add SUMPRODUCT formula for total sales target
+writeFormula(wb, "Employee Data", x = "=SUMPRODUCT(F2:F101, G2:G101)", startCol = 18, startRow = 2) # Total sales target
+
+# Specify the file path
+file_path <- "Enhanced_Employee_Sales_Data_With_Formulas.xlsx"
+
+# Save the workbook
+saveWorkbook(wb, file_path, overwrite = TRUE)
+
+# Open the Excel file
+browseURL(file_path)
+
+```

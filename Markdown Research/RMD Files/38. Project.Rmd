@@ -1,0 +1,64 @@
+---
+title: "Project 38"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(readxl)
+
+# Load the dataset
+credit_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/creditpredictions.xlsx")
+
+# Convert relevant categorical variables to factors (e.g., CODE_GENDER)
+credit_data <- credit_data %>%
+  mutate(CODE_GENDER = factor(CODE_GENDER))
+
+# Create a new variable 'Balance' by combining two columns (for example, combining AMT_INCOME_TOTAL and CNT_CHILDREN)
+credit_data <- credit_data %>%
+  mutate(Balance = AMT_INCOME_TOTAL / (CNT_CHILDREN + 1))  # Example of a new 'Balance' variable
+
+# Fit the first simple linear regression model
+model_simple <- lm(Balance ~ AMT_INCOME_TOTAL, data = credit_data)
+
+# Fit a multiple linear regression model
+model_multiple <- lm(Balance ~ AMT_INCOME_TOTAL + DAYS_BIRTH, data = credit_data)  # Replacing AGE with DAYS_BIRTH
+
+# Plot the residuals of the simple linear model
+ggplot(credit_data, aes(x = model_simple$fitted.values, y = model_simple$residuals)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted for Simple Linear Model",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+# Fit a model with interaction between AMT_INCOME_TOTAL and CODE_GENDER
+model_interaction <- lm(Balance ~ AMT_INCOME_TOTAL * CODE_GENDER, data = credit_data)
+
+# Plot the residuals of the interaction model
+ggplot(credit_data, aes(x = model_interaction$fitted.values, y = model_interaction$residuals)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted for Interaction Model",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+# Summary of the multiple linear regression model
+summary(model_multiple)
+
+# Plotting the actual vs predicted values for the multiple linear regression model
+ggplot(credit_data, aes(x = model_multiple$fitted.values, y = Balance)) +
+  geom_point(alpha = 0.6, color = "green") +
+  geom_smooth(method = 'lm', formula = y ~ x, color = "red") +
+  labs(title = "Actual vs Predicted for Multiple Linear Regression Model",
+       x = "Predicted Balance",
+       y = "Actual Balance") +
+  theme_minimal()
+
+```

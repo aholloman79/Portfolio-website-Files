@@ -1,0 +1,120 @@
+---
+title: "3D Plot"
+author: "Avery Holloman"
+date: "2024-08-19"
+output: html_document
+---
+
+
+```{r}
+library(plotly)
+
+# Sample data for demonstration
+x <- seq(1, 100, length.out = 10)
+y <- seq(1, 100, length.out = 10)
+z <- outer(x, y, function(x, y) sin(x/10) * cos(y/10))
+
+# 3D Surface Plot
+fig <- plot_ly(x = ~x, y = ~y, z = ~z, type = 'surface',
+               colorscale = list(c(0, 'blue'), c(1, 'red')),
+               showscale = FALSE) # Turn off color scale
+
+# Customize layout
+fig <- fig %>%
+  layout(scene = list(xaxis = list(title = 'Years_of_Treatment'),
+                      yaxis = list(title = 'Patient Age'),
+                      zaxis = list(title = 'Recovery_Index')),
+         title = "Improved 3D Plot")
+
+fig
+```
+
+```{r}
+# Load necessary library
+library(scatterplot3d)
+
+# Sample data for demonstration
+x <- rnorm(100)  # Random data for x-axis
+y <- rnorm(100)  # Random data for y-axis
+z <- rnorm(100)  # Random data for z-axis
+
+# Create a 3D scatter plot
+s3d <- scatterplot3d(x, y, z, 
+                     pch = 16,         # Set the plotting character to a filled circle
+                     color = "blue",   # Color of the points
+                     xlab = "X-axis",  # Label for the x-axis
+                     ylab = "Y-axis",  # Label for the y-axis
+                     zlab = "Z-axis",  # Label for the z-axis
+                     main = "3D Scatter Plot",  # Main title of the plot
+                     grid = TRUE,      # Adds grid lines to the plot
+                     box = TRUE)       # Adds a box around the plot
+
+# Optionally, you can add regression plane (or other elements) if needed
+# Example of adding a regression plane:
+fit <- lm(z ~ x + y)  # Fit a linear model
+s3d$plane3d(fit, draw_polygon = TRUE, draw_lines = TRUE)  # Add regression plane to the plot
+```
+
+```{r}
+# Load necessary library
+library(scatterplot3d)
+
+# Simulate data for warehouse logistics analysis
+set.seed(123)
+shipment_volume <- rnorm(100, mean = 500, sd = 50)  # Shipment volume
+handling_time <- rnorm(100, mean = 30, sd = 5)      # Handling time (in minutes)
+cost <- rnorm(100, mean = 1000, sd = 200)           # Cost (in dollars)
+
+# Create a factor variable to represent different warehouse zones
+warehouse_zone <- factor(sample(c("Zone A", "Zone B", "Zone C"), 100, replace = TRUE))
+
+# Assign colors based on warehouse zones
+colors <- c("red", "green", "blue")[as.numeric(warehouse_zone)]
+
+# Create a 3D scatter plot
+s3d <- scatterplot3d(shipment_volume, handling_time, cost, 
+                     pch = 19,          # Set the plotting character to a filled circle
+                     color = colors,    # Use the colors based on warehouse zones
+                     xlab = "Shipment Volume (units)",  # Label for the x-axis
+                     ylab = "Handling Time (minutes)",  # Label for the y-axis
+                     zlab = "Cost ($)",  # Label for the z-axis
+                     main = "3D Scatter Plot of Warehouse Logistics",  # Main title of the plot
+                     grid = TRUE,        # Adds grid lines to the plot
+                     box = TRUE)         # Adds a box around the plot
+
+# Add a legend to the plot
+legend("topright", legend = levels(warehouse_zone), col = c("red", "green", "blue"), pch = 19)
+```
+```{r}
+# Install and load necessary libraries
+install.packages("readxl")
+install.packages("scatterplot3d")
+library(readxl)
+library(scatterplot3d)
+
+# Load the dataset from the Excel file
+data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/warehouse_logistics_analysis.xlsx")
+
+# Assign a factor variable to represent different warehouse zones
+# Here, we randomly assign zones for demonstration purposes
+set.seed(123)  # Ensure reproducibility
+warehouse_zone <- factor(sample(c("Zone A", "Zone B", "Zone C"), nrow(data), replace = TRUE))
+
+# Assign colors based on warehouse zones
+colors <- c("red", "green", "blue")[as.numeric(warehouse_zone)]
+
+# Create a 3D scatter plot
+s3d <- scatterplot3d(data$Shipment_Volume, data$Handling_Time, data$Cost, 
+                     pch = 19,          # Set the plotting character to a filled circle
+                     color = colors,    # Use the colors based on warehouse zones
+                     xlab = "Shipment Volume (units)",  # Label for the x-axis
+                     ylab = "Handling Time (minutes)",  # Label for the y-axis
+                     zlab = "Cost ($)",  # Label for the z-axis
+                     main = "3D Scatter Plot of Warehouse Logistics",  # Main title of the plot
+                     grid = TRUE,        # Adds grid lines to the plot
+                     box = TRUE)         # Adds a box around the plot
+
+# Add a legend to the plot
+legend("topright", legend = levels(warehouse_zone), col = c("red", "green", "blue"), pch = 19)
+```
+

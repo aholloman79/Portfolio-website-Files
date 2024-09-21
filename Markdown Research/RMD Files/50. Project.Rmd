@@ -1,0 +1,60 @@
+---
+title: "Project 50"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(caret)
+library(dplyr)
+library(readxl)
+
+# Load the dataset from the specified Excel file path
+medicare_medicaid_healthcare <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/medicare_medicaid_healthcare.xlsx")
+
+# Inspect the first few rows of the data to understand its structure
+head(medicare_medicaid_healthcare)
+
+# Ensure that the necessary columns are in the correct format (e.g., factor, numeric)
+medicare_medicaid_healthcare$Gender <- as.factor(medicare_medicaid_healthcare$Gender)
+medicare_medicaid_healthcare$Diagnosis <- as.factor(medicare_medicaid_healthcare$Diagnosis)
+medicare_medicaid_healthcare$Treatment_Type <- as.factor(medicare_medicaid_healthcare$Treatment_Type)
+medicare_medicaid_healthcare$Medicare_Eligibility <- as.factor(medicare_medicaid_healthcare$Medicare_Eligibility)  # If it's a binary factor
+medicare_medicaid_healthcare$Medicaid_Eligibility <- as.factor(medicare_medicaid_healthcare$Medicaid_Eligibility)  # If it's a binary factor
+
+# Set up 10-fold cross-validation
+train_control <- trainControl(method = "cv", number = 10)
+
+# Fit the logistic regression model
+model <- train(
+  Medicare_Eligibility ~ Age + Gender + Diagnosis + Treatment_Type + Medicare_Coverage + Medicaid_Coverage + Total_Treatment_Cost + Out_of_Pocket_Cost,
+  data = medicare_medicaid_healthcare,
+  method = "glm",
+  family = binomial(),
+  trControl = train_control
+)
+
+# Extract cross-validation results
+cv_results <- model$resample
+
+# Plot cross-validation accuracy with enhanced colors
+ggplot(cv_results, aes(x = Resample, y = Accuracy)) +
+  geom_point(color = "#1f77b4", size = 3) +  # Blue
+  geom_line(color = "#ff7f0e", size = 1) +  # Orange
+  ggtitle("10-Fold Cross-Validation Accuracy for Medicare Eligibility Prediction") +
+  xlab("Fold") +
+  ylab("Accuracy") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+
+# Summary of the model
+summary(model)
+
+```

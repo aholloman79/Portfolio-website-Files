@@ -1,0 +1,111 @@
+---
+title: "Project 32"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# Convert the Outcome to a binary variable for modeling purposes
+dataset <- dataset %>%
+  mutate(Outcome_Binary = ifelse(Outcome == "Improved", 1, 0))
+
+# Train-Test Split
+set.seed(123)  # For reproducibility
+train_indices <- sample(1:nrow(dataset), 0.7 * nrow(dataset))
+train_data <- dataset[train_indices, ]
+test_data <- dataset[-train_indices, ]
+
+# Fit different models
+
+# 1. Linear Model
+linear_model <- lm(Outcome_Binary ~ Age + Dosage_Med1_mg + Gender, data = train_data)
+
+# 2. Polynomial Model (Quadratic)
+quadratic_model <- lm(Outcome_Binary ~ Age + I(Age^2) + Dosage_Med1_mg + Gender, data = train_data)
+
+# 3. Flexible Model (Cubic Polynomial)
+cubic_model <- lm(Outcome_Binary ~ poly(Age, 3) + Dosage_Med1_mg + Gender, data = train_data)
+
+# Predict on test data
+test_data$linear_pred <- predict(linear_model, test_data)
+test_data$quadratic_pred <- predict(quadratic_model, test_data)
+test_data$cubic_pred <- predict(cubic_model, test_data)
+
+# Calculate Mean Squared Error
+mse <- function(true, predicted) {
+  mean((true - predicted)^2)
+}
+
+mse_linear <- mse(test_data$Outcome_Binary, test_data$linear_pred)
+mse_quadratic <- mse(test_data$Outcome_Binary, test_data$quadratic_pred)
+mse_cubic <- mse(test_data$Outcome_Binary, test_data$cubic_pred)
+
+# Create a data frame to store the MSE for plotting
+mse_df <- data.frame(
+  Model = c("Linear", "Quadratic", "Cubic"),
+  MSE = c(mse_linear, mse_quadratic, mse_cubic)
+)
+
+# Plot MSE for different models
+ggplot(mse_df, aes(x = Model, y = MSE, fill = Model)) +
+  geom_bar(stat = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Mean Squared Error for Different Models",
+       x = "Model Type",
+       y = "Mean Squared Error") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Linear" = "#1f78b4", "Quadratic" = "#33a02c", "Cubic" = "#e31a1c")) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Bias-Variance Trade-off
+# Calculate Bias and Variance for each model
+bias <- function(true, predicted) {
+  mean((true - mean(predicted))^2)
+}
+
+variance <- function(predicted) {
+  var(predicted)
+}
+
+bias_variance_df <- data.frame(
+  Model = c("Linear", "Quadratic", "Cubic"),
+  Bias = c(bias(test_data$Outcome_Binary, test_data$linear_pred),
+           bias(test_data$Outcome_Binary, test_data$quadratic_pred),
+           bias(test_data$Outcome_Binary, test_data$cubic_pred)),
+  Variance = c(variance(test_data$linear_pred),
+               variance(test_data$quadratic_pred),
+               variance(test_data$cubic_pred))
+)
+
+# Plot Bias-Variance Trade-off
+ggplot(bias_variance_df, aes(x = Model)) +
+  geom_bar(aes(y = Bias, fill = "Bias"), stat = "identity", position = "dodge", alpha = 0.7) +
+  geom_bar(aes(y = Variance, fill = "Variance"), stat = "identity", position = "dodge", alpha = 0.7) +
+  labs(title = "Bias-Variance Trade-off",
+       x = "Model Type",
+       y = "Error Component") +
+  theme_minimal() +
+  scale_fill_manual(name = "Component", values = c("Bias" = "#1f78b4", "Variance" = "#33a02c")) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Visualizing the Fits of Different Models
+ggplot(test_data, aes(x = Age, y = Outcome_Binary)) +
+  geom_point(alpha = 0.5, color = "gray") +
+  geom_line(aes(y = linear_pred, color = "Linear"), size = 1) +
+  geom_line(aes(y = quadratic_pred, color = "Quadratic"), size = 1, linetype = "dashed") +
+  geom_line(aes(y = cubic_pred, color = "Cubic"), size = 1, linetype = "dotted") +
+  labs(title = "Model Fits: Linear vs Quadratic vs Cubic",
+       x = "Age",
+       y = "Predicted Outcome (Binary)") +
+  theme_minimal() +
+  scale_color_manual(values = c("Linear" = "#1f78b4", "Quadratic" = "#33a02c", "Cubic" = "#e31a1c")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```

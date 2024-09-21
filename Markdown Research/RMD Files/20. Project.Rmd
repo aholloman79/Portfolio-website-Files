@@ -1,0 +1,27 @@
+---
+title: "Visualizing Healthcare Outcomes: A 3D Perspective on Patient Recovery"
+author: "Avery Holloman"
+date: "2024-08-19"
+output: html_document
+---
+
+```{r}
+# I decided to load the "scatterplot3d" R package because it provides functionality to create amazing 3D scatter plots. It has the ability to show visualizational relationships between three continuous variables in a three-dimensional space.
+library(scatterplot3d)
+
+# I have decided to utilize a fictitious data set I created for practice purposes in a healthcare setting
+set.seed(123)
+n <- 40
+Years_of_Treatment <- seq(1, 10, length.out = n)
+Patient_Age <- seq(20, 80, length.out = n)
+Recovery_Index <- sin(Years_of_Treatment) + cos(Patient_Age / 10)
+
+# 3D Scatter plot with surface reflecting healthcare data
+scatterplot3d(Years_of_Treatment, Patient_Age, Recovery_Index, type = "h", color = "purple", pch = 16, grid = TRUE, 
+              main = "3D Scatter Plot of Healthcare Data", xlab = "Years of Treatment", ylab = "Patient Age", zlab = "Recovery Index")
+
+# Add a grid/surface with a healthcare theme
+s3d <- scatterplot3d(Years_of_Treatment, Patient_Age, Recovery_Index, type = "n", grid = FALSE)
+s3d$plane3d(Recovery_Index, Years_of_Treatment, Patient_Age, draw_polygon = TRUE, lty = 1, lwd = 2, col = "red")
+
+```

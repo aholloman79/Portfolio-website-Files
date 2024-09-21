@@ -1,0 +1,103 @@
+---
+title: "edit1"
+author: "Avery Holloman"
+date: "2024-08-31"
+output: html_document
+---
+
+```{r} 
+```{r}
+
+
+# Fig. S5: Enhancers occupancy by TFBSs
+ggplot(data = Table_S5, aes(x = num_tfbs)) +
+  geom_histogram(bins = 20, fill = "purple", color = "black") +
+  theme_minimal() +
+  labs(title = "TFBS Occupancy in Enhancers",
+       x = "Number of TFBSs per Enhancer",
+       y = "Count")
+
+# Fig. S6: TFs frequency in enhancers
+ggplot(data = Table_S5, aes(x = tf_count)) +
+  geom_histogram(bins = 20, fill = "orange", color = "black") +
+  theme_minimal() +
+  labs(title = "TFs Frequency in Enhancers",
+       x = "Number of TFs per Enhancer",
+       y = "Count")
+
+# Fig. S7: Validation of the TF co-expression method
+ggplot(data = Table_S6, aes(x = correlation, fill = dataset)) +
+  geom_density(alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Validation of TF Co-expression Method",
+       x = "Pearson Correlation Coefficient",
+       y = "Density")
+
+# Fig. S8: Gene-enhancer association distance distribution
+ggplot(data = Table_S6, aes(x = distance, fill = method)) +
+  geom_histogram(position = "dodge", bins = 50, color = "black") +
+  theme_minimal() +
+  labs(title = "Gene-Enhancer Association Distance Distribution",
+       x = "Distance (bp)",
+       y = "Count")
+
+# Fig. S9: Gene-enhancer scores distribution
+ggplot(data = Table_S6, aes(x = score, fill = method)) +
+  geom_histogram(position = "dodge", bins = 30, color = "black") +
+  theme_minimal() +
+  labs(title = "Gene-Enhancer Association Scores Distribution",
+       x = "Score",
+       y = "Count")
+
+# Fig. S10: Relationship between enhancer score and supporting evidence
+ggplot(data = Table_S6, aes(x = score_bin, y = association_count, fill = association_type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(title = "Relationship Between Enhancer Score and Supporting Evidence",
+       x = "Enhancer Score Bin",
+       y = "Association Count")
+
+# Additional Plots
+
+# Load necessary libraries for additional plots
+library(ggplot2)
+
+# Create a sample dataset that mimics the structure
+set.seed(123)
+data <- data.frame(
+  rank = rep(1:10000, 5),
+  count = c(1000 / (1:10000), 
+            900 / (1:10000)^0.8, 
+            800 / (1:10000)^0.9, 
+            700 / (1:10000)^0.95, 
+            600 / (1:10000)^0.7),
+  method = rep(c("eQTL", "Chi-C", "eRNA", "TF Co-Expression", "Combined score"), each = 10000)
+)
+
+# Convert method to factor to control the legend order
+data$method <- factor(data$method, levels = c("eQTL", "Chi-C", "eRNA", "TF Co-Expression", "Combined score"))
+
+# Plot A: Enhancers per gene
+ggplot(data, aes(x = rank, y = count, color = method, shape = method)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10() +
+  theme_minimal() +
+  labs(title = "Enhancers per Gene", 
+       x = "Gene Rank", 
+       y = "Enhancer Count") +
+  theme(legend.title = element_blank())
+
+# Plot B: Genes per enhancer
+ggplot(data, aes(x = rank, y = count, color = method, shape = method)) +
+  geom_line() +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10() +
+  theme_minimal() +
+  labs(title = "Genes per Enhancer", 
+       x = "Enhancer Rank", 
+       y = "Gene Count") +
+  theme(legend.title = element_blank())
+```

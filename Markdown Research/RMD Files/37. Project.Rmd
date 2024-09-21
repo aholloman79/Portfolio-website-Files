@@ -1,0 +1,49 @@
+---
+title: "Project 37"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(broom)  # For augment function
+
+# Assuming the dataset is already loaded as 'credit_data'
+
+# Create a synthetic 'Balance' variable
+set.seed(123) # For reproducibility
+credit_data <- credit_data %>%
+  mutate(Balance = AMT_INCOME_TOTAL * 0.2 + rnorm(n(), mean = 1000, sd = 200))
+
+# Fit the first simple linear regression model
+model_simple <- lm(Balance ~ AMT_INCOME_TOTAL, data = credit_data)
+
+# Summarize the simple model
+summary(model_simple)
+
+# Augment the dataset with fitted values and residuals
+credit_data_augmented <- augment(model_simple, credit_data)
+
+# Plot the relationship between Income and Balance
+ggplot(credit_data, aes(x = AMT_INCOME_TOTAL, y = Balance)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", formula = y ~ x) +
+  labs(title = "Income vs Balance with Linear Regression Line",
+       x = "Income",
+       y = "Balance") +
+  theme_minimal()
+
+# Plot the residuals of the model
+ggplot(credit_data_augmented, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted for Simple Linear Model",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+
+```

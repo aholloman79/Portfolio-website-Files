@@ -1,0 +1,66 @@
+---
+title: "Project 33"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# For simplicity, let's use a subset of the data for a simple linear regression example
+# We'll predict 'Dosage_Med1_mg' based on 'Age'
+dataset <- dataset %>%
+  filter(!is.na(Age) & !is.na(Dosage_Med1_mg))
+
+# Fit a simple linear regression model
+linear_model <- lm(Dosage_Med1_mg ~ Age, data = dataset)
+
+# Summary of the model to get the coefficients and their significance
+summary(linear_model)
+
+# Predict values using the fitted model
+dataset$predicted_dosage <- predict(linear_model, dataset)
+
+# Plot the data with the regression line
+ggplot(dataset, aes(x = Age, y = Dosage_Med1_mg)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_line(aes(y = predicted_dosage), color = "red", size = 1.2) +
+  labs(title = "Simple Linear Regression: Dosage vs Age",
+       x = "Age",
+       y = "Dosage of Medication (mg)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Residuals plot to assess the fit
+ggplot(dataset, aes(x = predicted_dosage, y = Dosage_Med1_mg - predicted_dosage)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values",
+       x = "Fitted Values (Predicted Dosage)",
+       y = "Residuals") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calculate confidence intervals for the model coefficients
+confint(linear_model)
+
+# Plot confidence intervals for predictions
+ggplot(dataset, aes(x = Age, y = Dosage_Med1_mg)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_line(aes(y = predicted_dosage), color = "red", size = 1.2) +
+  geom_ribbon(aes(ymin = predict(linear_model, dataset, interval = "confidence")[, "lwr"],
+                  ymax = predict(linear_model, dataset, interval = "confidence")[, "upr"]),
+              alpha = 0.2, fill = "lightblue") +
+  labs(title = "Simple Linear Regression: Dosage vs Age with Confidence Intervals",
+       x = "Age",
+       y = "Dosage of Medication (mg)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```

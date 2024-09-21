@@ -1,0 +1,67 @@
+---
+title: "12. Linear Models and Least Squares"
+author: "Avery Holloman"
+date: "2024-08-22"
+output: html_document
+---
+
+``` {r}
+# Loading the ggplot2 to have better visuzliation and the caret function for machine learning algorithms and the readxl file is utilized to pull the data from my computer 
+library(ggplot2)
+library(caret)
+library(readxl)  
+
+# Here is were I loaded the excel file from my computer 
+warehouse_logistics_analysis <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/warehouse_logistics_analysis.xlsx")
+
+# Looking at the structure of my dataset with the str function and providing a summary to see more details 
+str(warehouse_logistics_analysis)
+summary(warehouse_logistics_analysis)
+
+# I ran into several errors so I had to convert the 'outcome to numeric, handling non-numeric values
+warehouse_logistics_analysis$Shipment_Volume <- as.numeric(as.character(warehouse_logistics_analysis$Shipment_Volume))
+
+#Since there was a particular problem with the look of the plot resulted in myself to remove irrelevant rows with NAs in to certain columns that were not necessary, I will keep testing to see if I need to remove the rows or just the NAs in the future analysis  dealing with Handling_Time, cost and Shipment_Volume
+warehouse_logistics_analysis <- warehouse_logistics_analysis[!is.na(warehouse_logistics_analysis$Handling_Time) &
+                                                             !is.na(warehouse_logistics_analysis$Cost) &
+                                                             !is.na(warehouse_logistics_analysis$Shipment_Volume), ]
+
+# Next I needed to split into a reasonable size and then cleaned data into training and testing sets
+set.seed(123)
+trainIndex <- createDataPartition(warehouse_logistics_analysis$Shipment_Volume, p = .8, list = FALSE)
+warehouseTrain <- warehouse_logistics_analysis[trainIndex, ]
+warehouseTest <- warehouse_logistics_analysis[-trainIndex, ]
+
+# Now it is time to prepare the data that I split into training and testing data
+trainX <- warehouseTrain[, c('Handling_Time', 'Cost')]
+trainY <- warehouseTrain$Shipment_Volume
+testX <- warehouseTest[, c('Handling_Time', 'Cost')]
+testY <- warehouseTest$Shipment_Volume
+
+# The first model is going to be a Linear Regression of Least Squares
+lm_model <- lm(Shipment_Volume ~ Handling_Time + Cost, data = warehouseTrain)
+
+# Lets take a look at the summary of the model
+summary(lm_model)
+
+# Now after taking a look at the summary it is now to start to predict the outcomes for the test set that I created when I split the data
+lm_pred <- predict(lm_model, newdata = warehouseTest)
+
+# Next, let me evaluate the linear regression model utilizing the RMSE
+lm_rmse <- sqrt(mean((lm_pred - testY)^2))
+cat("Linear Regression (Least Squares) RMSE:", lm_rmse, "\n")
+
+# Now lets take a better visualization of the actual vs predicted results
+results <- data.frame(Actual = testY, Predicted = lm_pred)
+
+# I will plot with ggplot2 labeling the title and x and y labels for better clarity.
+ggplot(results, aes(x = Actual, y = Predicted)) +2
+  geom_point(color = "#56B4E9") +  # A lighter blue for points
+  geom_abline(intercept = 0, slope = 1, color = "#E69F00") +  # A warm orange for the reference line
+  theme_minimal() +
+  labs(title = "Actual vs Predicted: Linear Regression",
+       x = "Actual Shipment Volume",
+       y = "Predicted Shipment Volume") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```

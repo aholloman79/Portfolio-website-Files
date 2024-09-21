@@ -1,0 +1,56 @@
+---
+title: "Project 53"
+author: "Avery Holloman"
+date: "2024-08-27"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(readxl)
+
+# Load the data
+data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/mmp_ac_s_neg_distinct.xlsx")
+
+# Clean data: Remove NA values from specific columns only (Ki_1 and Ki_2)
+data <- data %>%
+  filter(!is.na(Ki_1) & !is.na(Ki_2))
+
+# Step 1: Calculate the number of samples per task
+task_sample_count <- data %>%
+  group_by(tid) %>%
+  summarise(samples = n())
+
+# Step 2: Calculate the ratio of positive to negative samples per task
+data <- data %>%
+  mutate(pos_neg_ratio = ifelse(Ki_1 > Ki_2, 1, 0))
+
+task_pos_neg_ratio <- data %>%
+  group_by(tid) %>%
+  summarise(pos = sum(pos_neg_ratio),
+            neg = n() - sum(pos_neg_ratio),
+            pos_neg_ratio = pos / (neg + pos))
+
+# Plot 1: Distribution of the number of samples per task
+plot1 <- ggplot(task_sample_count, aes(x = samples)) +
+  geom_histogram(binwidth = 1000, fill = "purple", alpha = 0.7) +
+  labs(title = "Distribution of Number of Samples per Task",
+       x = "#samples",
+       y = "#tasks") +
+  theme_minimal()
+
+# Plot 2: Distribution of the ratio of positive to negative samples per task
+plot2 <- ggplot(task_pos_neg_ratio, aes(x = pos_neg_ratio)) +
+  geom_histogram(binwidth = 0.05, fill = "purple", alpha = 0.7) +
+  labs(title = "Distribution of Positive/Negative Ratio per Task",
+       x = "#pos / #neg",
+       y = "#tasks") +
+  theme_minimal()
+
+# Display both plots
+print(plot1)
+print(plot2)
+
+```

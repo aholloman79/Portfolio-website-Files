@@ -1,0 +1,38 @@
+---
+title: "Distribution of Packet Sizes Across Network Protocols"
+author: "Avery Holloman"
+date: "2024-08-13"
+output: html_document
+---
+
+```{r}
+#I have already installed the necessary packages so next is to load the libraries readxl to read in the data saved on my computer, ggplot2 for plotting and gridExtra for arranging multiple grid-based plots in a single layout instead of separate plots
+library(ggplot2)
+library(readxl)
+library(dplyr)
+
+# Loading the data from my computer that is stored in my r studio projects folder
+data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/anomaly_detection_network_traffic.xlsx")
+
+# Changing my method to separate my analysis by each individual protocol for better clarity and naming it data_summary
+data_summary <- data %>%
+  group_by(Protocol, Packet_Size) %>%
+  summarise(Packet_Count = n()) %>%
+  ungroup()
+
+# Utilizing ggplot2 to view the raw packet sizes by protocol with better transparency effects with 0.6 alpha to reveal more about the data in separate plots by protocol
+ggplot(data_summary, aes(x = Packet_Size, y = Packet_Count, color = Protocol)) +
+  geom_line(size = 1, alpha = 0.6) +  
+  facet_wrap(~ Protocol, scales = "free_y") +  
+  labs(x = "Packet Size", y = "Packet Count", color = "Protocol") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "top",
+    legend.title = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  ggtitle("Packet Count by Size across Protocols (Raw Data)")
+
+```
+```

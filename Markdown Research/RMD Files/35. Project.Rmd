@@ -1,0 +1,74 @@
+---
+title: "Project 35"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(car)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# Clean the dataset by removing rows with missing values in relevant columns
+dataset <- dataset %>%
+  filter(!is.na(Age) & !is.na(Dosage_Med1_mg) & !is.na(Gender) & !is.na(BMI) & !is.na(Cholesterol_mg_dL))
+
+# Convert 'Gender' to a factor for use as a qualitative predictor
+dataset$Gender <- as.factor(dataset$Gender)
+
+# Fit a multiple linear regression model
+multiple_model <- lm(Dosage_Med1_mg ~ Age + Gender + BMI + Cholesterol_mg_dL, data = dataset)
+
+# Summary of the model to interpret coefficients and p-values
+summary(multiple_model)
+
+# ANOVA table to assess the overall significance of the model
+anova(multiple_model)
+
+# Calculate Variance Inflation Factor (VIF) to check for multicollinearity
+vif_values <- vif(multiple_model)
+print(vif_values)
+
+# Forward selection for variable selection
+stepwise_model <- step(multiple_model, direction = "forward")
+
+# Summary of the stepwise model to interpret the selected variables
+summary(stepwise_model)
+
+# Visualize the residuals of the selected model to assess fit
+ggplot(dataset, aes(x = predict(stepwise_model), y = residuals(stepwise_model))) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values (Stepwise Selection Model)",
+       x = "Fitted Values (Predicted Dosage)",
+       y = "Residuals") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Handle qualitative predictors with more than two levels
+# For demonstration, let's create a fictitious variable 'Ethnicity' with three levels
+set.seed(123)
+dataset$Ethnicity <- sample(c("Caucasian", "African-American", "Asian"), nrow(dataset), replace = TRUE)
+dataset$Ethnicity <- as.factor(dataset$Ethnicity)
+
+# Fit a model including the qualitative predictor with more than two levels
+ethnicity_model <- lm(Dosage_Med1_mg ~ Age + Gender + BMI + Cholesterol_mg_dL + Ethnicity, data = dataset)
+
+# Summary of the model to check the impact of Ethnicity
+summary(ethnicity_model)
+
+# Visualize the impact of the Ethnicity predictor
+ggplot(dataset, aes(x = Ethnicity, y = Dosage_Med1_mg)) +
+  geom_boxplot(aes(fill = Ethnicity), alpha = 0.6) +
+  labs(title = "Dosage of Medication by Ethnicity",
+       x = "Ethnicity",
+       y = "Dosage of Medication (mg)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```

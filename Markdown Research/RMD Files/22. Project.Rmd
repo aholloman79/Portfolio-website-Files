@@ -1,0 +1,81 @@
+---
+title: "22. Analyzing Enhancer Length Distribution: Insights into Genomic Regulatory Complexity"
+author: "Avery Holloman"
+date: "2024-08-12"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)   # For reading Excel files
+library(ggplot2)  # For creating plots
+
+# Load the Excel files
+Table_S4 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table S4.xlsx")
+Table_S5 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table_S5.xlsx")
+Table_S6 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table_S6.xlsx")
+
+# Preview the data
+head(Table_S4)
+head(Table_S5)
+head(Table_S6)
+```
+
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+
+# Load the Excel files with correct parameters
+Table_S4 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table S4.xlsx", sheet = "Sheet1", skip = 1)
+Table_S5 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table_S5.xlsx", sheet = "Sheet1", skip = 1)
+Table_S6 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table_S6.xlsx", sheet = "Sheet1", skip = 1)
+
+# Rename columns if needed
+colnames(Table_S4) <- c("Literature", "Column2", "Column3", "Column4", "Column5", "Column6", 
+                        "Column7", "Column8", "Column9", "GeneHancer", "Column11", "Column12", 
+                        "Column13", "Column14", "ComparisonStats", "Column16", "Column17", 
+                        "Column18", "Column19")  # Adjust names as needed
+
+# Verify data
+head(Table_S4)
+
+# Updated plot examples
+# Fig. S2: Enhancer size distribution
+ggplot(data = Table_S4, aes(x = Column3)) +  # Replace 'Column3' with the correct column name
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Enhancer Size Distribution",
+       x = "Enhancer Size (bp)",
+       y = "Count")
+
+
+```
+
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+
+# Load the Excel file
+Table_S4 <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Table S4.xlsx", sheet = "Sheet1", skip = 1)
+
+# Rename the column to make it easier to use
+colnames(Table_S4)[which(colnames(Table_S4) == "length, bp...5")] <- "enhancer_length"
+
+# Verify the column renaming
+head(Table_S4)
+
+# Fig. S3: Enhancer length distribution
+ggplot(data = Table_S4, aes(x = enhancer_length)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  theme_minimal() +
+  labs(title = "Enhancer Length Distribution",
+       x = "Enhancer Length (bp)",
+       y = "Count")
+
+```
+
+

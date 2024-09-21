@@ -1,0 +1,65 @@
+---
+title: "Analyzing Healthcare Outcomes for VA Facilities"
+author: "Avery Holloman"
+date: "2024-08-18"
+output: html_document
+---
+
+```{r}
+# I have already installed the necessary packages so next is to load the libraries readxl to read in the data saved on my computer, ggplot2 for plotting and gridExtra for arranging multiple grid-based plots in a single layout instead of seperate plots
+library(readxl)
+library(ggplot2)
+library(gridExtra)
+SpaceCeleb_VA_Outcomes <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/SpaceCeleb_VA_Outcomes.xls")
+```
+
+```{r}
+#choose the "head.matrix" instead of "head" function to just out of curiosity but it does the same of showing the first few rows of the data so I can take a look at the different data types
+head.matrix(SpaceCeleb_VA_Outcomes)
+```
+```{r}
+# As I ran my plot I noticed that the variables names need to be renamed as it was causing the x and y labels to merge to the point that I could not read the data so I rename the columns to a shorter name for a few variables for easier plotting
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Ambulatory Surgical Center"] <- "ASC"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Acute Myocardial Infarction"] <- "AMI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Coronary Artery Bypass Graft"] <- "CABG"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Catheter-associated urinary tract infections"] <- "CAUTI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Clostridium difficile Infection"] <- "CDI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Central line-associated bloodstream infections"] <- "CLABSI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Chronic Obstructive Pulmonary Disease"] <- "COPD"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Days or Procedure Count"] <- "Procedure Days"
+```
+
+
+```{r}
+# Since I have the gridExtra library loaded I am able to create a simple function to plot my three variables by scaling them to size, smoothing the data and making the points on the data red for better clarity
+plot_three_variables <- function(data, var1, var2, var3) {
+  p1 <- ggplot(data, aes(x = .data[[var1]], y = as.numeric(Score))) +
+    geom_point(color = "red") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var1, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  p2 <- ggplot(data, aes(x = .data[[var2]], y = as.numeric(Score))) +
+    geom_point(color = "green") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var2, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  p3 <- ggplot(data, aes(x = .data[[var3]], y = as.numeric(Score))) +
+    geom_point(color = "purple") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var3, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  grid.arrange(p1, p2, p3, ncol = 3)
+}
+
+# The names were still to long so I created abbriviations 
+plot_three_variables(SpaceCeleb_VA_Outcomes, "ASC", "AMI", "CABG")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "CAUTI", "CDI", "CLABSI")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Complications", "COPD", "Procedure Days")
+
+```

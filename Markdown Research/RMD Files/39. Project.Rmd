@@ -1,0 +1,97 @@
+---
+title: "Project 39"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(readxl)
+
+# Load the dataset
+credit_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/creditpredictions.xlsx")
+
+# Convert relevant categorical variables to factors (e.g., CODE_GENDER)
+credit_data <- credit_data %>%
+  mutate(CODE_GENDER = factor(CODE_GENDER))
+
+# Create a new variable 'Balance' by combining two columns (for example, combining AMT_INCOME_TOTAL and CNT_CHILDREN)
+credit_data <- credit_data %>%
+  mutate(Balance = AMT_INCOME_TOTAL / (CNT_CHILDREN + 1))  # Example of a new 'Balance' variable
+
+# Create a synthetic binary outcome 'Default' for demonstration purposes
+# Assume that customers with Balance over a certain threshold are more likely to default
+credit_data <- credit_data %>%
+  mutate(Default = ifelse(Balance > median(Balance, na.rm = TRUE), 1, 0))
+
+# Fit a simple logistic regression model using Balance to predict Default
+model_logistic_balance <- glm(Default ~ Balance, family = binomial, data = credit_data)
+
+# Summary of the logistic regression model
+summary(model_logistic_balance)
+
+# Plot the logistic regression fit for Balance
+ggplot(credit_data, aes(x = Balance, y = Default)) +
+  geom_jitter(width = 0.1, height = 0.1, alpha = 0.4) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "blue") +
+  labs(title = "Logistic Regression Fit: Balance vs Probability of Default",
+       x = "Balance",
+       y = "Probability of Default") +
+  theme_minimal()
+
+# Predict the probability of default for a Balance of $1000 and $2000
+pred_prob_1000 <- predict(model_logistic_balance, newdata = data.frame(Balance = 1000), type = "response")
+pred_prob_2000 <- predict(model_logistic_balance, newdata = data.frame(Balance = 2000), type = "response")
+
+# Print the predicted probabilities
+pred_prob_1000
+pred_prob_2000
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(scales)  # For rescaling functions
+
+# Load the dataset
+credit_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/creditpredictions.xlsx")
+
+# Convert relevant categorical variables to factors (e.g., CODE_GENDER)
+credit_data <- credit_data %>%
+  mutate(CODE_GENDER = factor(CODE_GENDER))
+
+# Create a new variable 'Balance' by combining two columns (for example, combining AMT_INCOME_TOTAL and CNT_CHILDREN)
+credit_data <- credit_data %>%
+  mutate(Balance = AMT_INCOME_TOTAL / (CNT_CHILDREN + 1))  # Example of a new 'Balance' variable
+
+# Scale the Balance variable to handle large values and improve model convergence
+credit_data <- credit_data %>%
+  mutate(Balance = rescale(Balance))
+
+# Create a synthetic binary outcome 'Default' for demonstration purposes
+# Assume that customers with Balance over a certain threshold are more likely to default
+credit_data <- credit_data %>%
+  mutate(Default = ifelse(Balance > median(Balance, na.rm = TRUE), 1, 0))
+
+# Fit a simple logistic regression model using Balance to predict Default
+model_logistic_balance <- glm(Default ~ Balance, family = binomial, data = credit_data)
+
+# Summary of the logistic regression model
+summary(model_logistic_balance)
+
+# Plot the logistic regression fit for Balance
+ggplot(credit_data, aes(x = Balance, y = Default)) +
+  geom_jitter(width = 0.1, height = 0.1, alpha = 0.4) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "blue") +
+  labs(title = "Logistic Regression Fit: Balance vs Probability of Default",
+       x = "Balance",
+       y = "Probability of Default") +
+  theme_minimal()
+```
+

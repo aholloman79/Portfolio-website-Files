@@ -1,0 +1,112 @@
+---
+title: "Crimestoppers $150,000"
+author: "Avery Holloman"
+date: "2024-08-23"
+output: html_document
+---
+
+```{r}
+install.packages("imager")
+install.packages("opencv")
+install.packages("magick")
+```
+
+```{r}
+library(imager)
+library(opencv)
+library(magick)
+```
+
+
+```{r}
+library(imager)
+
+# Load your image
+img_path <- "C:/Users/jacob/OneDrive/Desktop/Project X/R Studio Images/1_criminal.png"
+img <- load.image(img_path)
+
+# Display the image
+plot(img)
+```
+```{r}
+# Display the image and manually select points (for facial landmarks)
+plot(img)
+points <- locator(n = 20)  # Manually select 20 points on the face for key landmarks
+
+# Convert points to a data frame
+points_df <- data.frame(x = points$x, y = points$y)
+```
+
+```{r}
+# Install and load the necessary packages
+install.packages("imager")
+library(imager)
+
+# Define the path to your image
+img_path <- "C:/Users/jacob/OneDrive/Desktop/Project X/R Studio Images/Screenshot 2024-08-19 074934.png"
+
+# Load the image
+img <- load.image(img_path)
+
+# Display the image
+plot(img, main="Loaded Image")
+
+# Convert the image to a data frame of pixel values
+img_data <- as.data.frame(img, wide = "c")  # 'wide = "c"' keeps RGB channels separate
+
+# Inspect the first few rows of the data frame
+head(img_data)
+
+```
+```{r}
+library(imager)
+library(fields)
+
+# Define the path to your image
+img_path <- "C:/Users/jacob/OneDrive/Desktop/Project X/R Studio Images/Screenshot 2024-08-19 074934.png"
+
+# Load the image
+img <- load.image(img_path)
+
+# Display the image
+plot(img, main="Loaded Image")
+
+# Convert the image to a data frame of pixel values
+img_data <- as.data.frame(img, wide = "c")  # 'wide = "c"' keeps RGB channels separate
+
+# Define the original and target control points
+original_points <- matrix(c(1, 1,                      # Top-left
+                            dim(img)[2], 1,           # Top-right
+                            1, dim(img)[1],           # Bottom-left
+                            dim(img)[2], dim(img)[1]), # Bottom-right
+                          ncol=2, byrow=TRUE)
+
+target_points <- matrix(c(20, 20,                      # Move top-left slightly right and down
+                          dim(img)[2]-20, 1,          # Top-right moved slightly left
+                          1, dim(img)[1]-20,          # Bottom-left moved slightly up
+                          dim(img)[2]-20, dim(img)[1]-20), # Bottom-right moved up and left
+                        ncol=2, byrow=TRUE)
+```
+
+```{r}
+# Define the original control points (x, y coordinates)
+original_x <- c(1, dim(img)[2], 1, dim(img)[2]) # x-coordinates of original points
+original_y <- c(1, 1, dim(img)[1], dim(img)[1]) # y-coordinates of original points
+
+# Define the target control points (transformed x, y coordinates)
+target_x <- c(20, dim(img)[2] - 20, 1, dim(img)[2] - 20) # x-coordinates of target points
+target_y <- c(20, 1, dim(img)[1] - 20, dim(img)[1] - 20) # y-coordinates of target points
+
+```
+
+```{r}
+# Fit the TPS model using the original and target control points
+tps_model <- Tps(cbind(original_x, original_y), cbind(target_x, target_y))
+
+# Apply the TPS to the image data
+transformed_coords <- predict(tps_model, img_data[, c("x", "y")])
+
+# Update the pixel coordinates in the original data frame with the transformed ones
+img_data$x <- transformed_coords[, 1]
+img_data$y <- transformed_coords[, 2]
+```

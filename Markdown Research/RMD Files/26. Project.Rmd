@@ -1,0 +1,46 @@
+---
+title: "Project 11"
+author: "Avery Holloman"
+date: "2024-08-24"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(gridExtra)
+library(readxl)
+
+# Load your dataset
+warehouse_logistics_analysis <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/warehouse_logistics_analysis.xlsx")
+
+# Define the predictor (x) and response (y) variables
+x <- warehouse_logistics_analysis$Shipment_Volume
+y <- warehouse_logistics_analysis$Cost
+
+# Fit a linear model
+linear_model <- lm(y ~ x, data = warehouse_logistics_analysis)
+
+# Create the plot for the linear model
+linear_plot <- ggplot(warehouse_logistics_analysis, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  geom_vline(xintercept = mean(warehouse_logistics_analysis$Shipment_Volume), linetype = "dotted", color = "red") +
+  ggtitle("Linear Model: Cost vs. Shipment Volume") +
+  theme_minimal()
+
+# Fit a quadratic model
+quadratic_model <- lm(y ~ poly(x, 2, raw = TRUE), data = warehouse_logistics_analysis)
+
+# Create the plot for the quadratic model
+quadratic_plot <- ggplot(warehouse_logistics_analysis, aes(x = x, y = y)) +
+  geom_point() +
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE), se = FALSE, color = "blue") +
+  geom_vline(xintercept = mean(warehouse_logistics_analysis$Shipment_Volume), linetype = "dotted", color = "red") +
+  ggtitle("Quadratic Model: Cost vs. Shipment Volume") +
+  theme_minimal()
+
+# Combine both plots into one figure
+grid.arrange(linear_plot, quadratic_plot, ncol = 1)
+
+```

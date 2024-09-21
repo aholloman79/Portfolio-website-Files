@@ -1,0 +1,38 @@
+---
+14. title: "Packet Count by Size across Protocols"
+author: "Avery Holloman"
+date: "2024-08-13"
+output: html_document
+---
+
+```{r}
+# I have already installed the packages so I will just load the libraries , ggplot2 for plotting, readxl to read in the data, dplyr for filter, select, mutate, arrange, and summarize my data frames if necessary
+library(ggplot2)
+library(readxl)
+library(dplyr)
+
+# Since I have have the data loaded on my computer I will use the readxl function and rename it to something simple like the word "data"
+data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/anomaly_detection_network_traffic.xlsx")
+
+# I need to view the data in more detail so I will summarize the data of the different packet couns by their packet size but with a log10 for data transformation to fit in the scale of my plot and then I will group by the protocol but I need to also make sure the group is dropped after summarizing as I ran into a few syntax errors. 
+data_summary <- data %>%
+  mutate(Packet_Size_Log10 = log10(Packet_Size)) %>%
+  group_by(Packet_Size_Log10, Protocol) %>%
+  summarise(Packet_Count = n(), .groups = 'drop') 
+
+# Now lets take a look at the results with a plot from ggplot2 where I USE THE LOG10, NAMED THE "y" AND "X" axis ans then gave a title
+ggplot(data_summary, aes(x = Packet_Size_Log10, y = Packet_Count, color = Protocol)) +
+  geom_line(size = 1) +
+  scale_y_log10() +  
+  labs(x = "Packet Size (log10)", y = "Packet Count (log10)", color = "Protocol") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "top",
+    legend.title = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  ggtitle("Packet Count by Size across Protocols")
+
+```
+

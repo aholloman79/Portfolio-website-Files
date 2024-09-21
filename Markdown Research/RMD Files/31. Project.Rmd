@@ -1,0 +1,90 @@
+---
+title: "Project 31"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(splines)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# Preview the dataset
+head(dataset)
+
+# Convert the Outcome to a binary variable for modeling purposes
+dataset <- dataset %>%
+  mutate(Outcome_Binary = ifelse(Outcome == "Improved", 1, 0),
+         Gender = factor(Gender, levels = c("Male", "Female")))
+
+# Fit a linear regression model (simple structured model)
+linear_model <- lm(Outcome_Binary ~ Age + Dosage_Med1_mg + Gender, data = dataset)
+
+# Summary of the linear model
+summary(linear_model)
+
+# Visualize the linear model fit using ggplot2
+ggplot(dataset, aes(x = Age, y = Outcome_Binary)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Linear Model: Outcome vs. Age",
+       x = "Age",
+       y = "Predicted Outcome (Binary)") +
+  theme_minimal()
+
+# Fit a linear model with interaction (quadratic term)
+quadratic_model <- lm(Outcome_Binary ~ Age + I(Age^2) + Dosage_Med1_mg + Gender, data = dataset)
+
+# Summary of the quadratic model
+summary(quadratic_model)
+
+# Visualize the quadratic model fit
+ggplot(dataset, aes(x = Age, y = Outcome_Binary)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "green") +
+  labs(title = "Quadratic Model: Outcome vs. Age",
+       x = "Age",
+       y = "Predicted Outcome (Binary)") +
+  theme_minimal()
+
+# Fit a more flexible regression model using splines (Thin-Plate Spline)
+spline_model <- lm(Outcome_Binary ~ ns(Age, df = 4) + Dosage_Med1_mg + Gender, data = dataset)
+
+# Summary of the spline model
+summary(spline_model)
+
+# Visualize the spline model fit
+ggplot(dataset, aes(x = Age, y = Outcome_Binary)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", formula = y ~ ns(x, df = 4), se = FALSE, color = "purple") +
+  labs(title = "Spline Model: Outcome vs. Age",
+       x = "Age",
+       y = "Predicted Outcome (Binary)") +
+  theme_minimal()
+
+# Compare models visually in terms of fit
+ggplot(dataset, aes(x = Age, y = Outcome_Binary)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linetype = "dashed") +  # Linear model
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "green", linetype = "dotted") +  # Quadratic model
+  geom_smooth(method = "lm", formula = y ~ ns(x, df = 4), se = FALSE, color = "purple") +  # Spline model
+  labs(title = "Comparison of Model Fits: Linear vs. Quadratic vs. Spline",
+       x = "Age",
+       y = "Predicted Outcome (Binary)") +
+  theme_minimal()
+
+# Residuals plot to check for overfitting/underfitting
+ggplot(data = spline_model, aes(.fitted, .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values (Spline Model)",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+```

@@ -1,0 +1,61 @@
+---
+title: "Project 10"
+author: "Avery Holloman"
+date: "2024-08-24"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(readxl)
+
+# Load your dataset
+warehouse_logistics_analysis <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/warehouse_logistics_analysis.xlsx")
+
+# Use 'Shipment_Volume' as x1 and 'Handling_Time' as x2
+x1 <- warehouse_logistics_analysis$Shipment_Volume
+x2 <- warehouse_logistics_analysis$Handling_Time
+
+# Define the center of the neighborhood
+center <- c(mean(x1), mean(x2))  # Center at the mean of your data
+radius <- 0.5  # Example radius, adjust as needed
+
+# Create the left plot
+left_plot <- ggplot(warehouse_logistics_analysis, aes(x = Shipment_Volume, y = Handling_Time)) +
+  geom_point() +
+  geom_point(aes(x = center[1], y = center[2]), color = 'red', size = 3) +
+  annotate("path",
+           x = center[1] + radius * cos(seq(0, 2 * pi, length.out = 100)),
+           y = center[2] + radius * sin(seq(0, 2 * pi, length.out = 100)),
+           color = "red") +
+  geom_vline(xintercept = center[1], linetype = "dotted") +
+  geom_hline(yintercept = center[2], linetype = "dotted") +
+  ggtitle("10% Neighborhood") +
+  xlim(min(x1), max(x1)) +
+  ylim(min(x2), max(x2)) +
+  theme_minimal()
+
+# Function to calculate the radius for a given p and fraction of volume
+calculate_radius <- function(p, fraction) {
+  return(fraction^(1/p))
+}
+
+# Create data for the plot
+fractions <- seq(0, 0.7, by = 0.01)
+p_values <- c(1, 2, 3, 5, 10)
+radius_data <- expand.grid(fraction = fractions, p = p_values)
+radius_data$radius <- mapply(calculate_radius, radius_data$p, radius_data$fraction)
+
+# Create the right plot
+right_plot <- ggplot(radius_data, aes(x = fraction, y = radius, color = as.factor(p))) +
+  geom_line(size = 1) +
+  scale_color_manual(values = c("orange", "green", "cyan", "black", "red")) +
+  labs(x = "Fraction of Volume", y = "Radius", color = "p") +
+  ggtitle("Radius vs. Fraction of Volume") +
+  theme_minimal()
+
+# Combine both plots into one figure
+grid.arrange(left_plot, right_plot, ncol = 2)
+
+```

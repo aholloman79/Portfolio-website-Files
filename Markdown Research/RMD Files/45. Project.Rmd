@@ -1,0 +1,69 @@
+---
+title: "Project 45"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(MASS)   # For QDA and LDA
+library(e1071)  # For Naive Bayes
+library(ggplot2)
+library(caret)
+
+# Load the dataset from your computer
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# View the structure of the dataset
+str(funny_planetary_data)
+
+# Convert "Planet" to a factor since it will be our categorical class variable
+funny_planetary_data <- funny_planetary_data %>%
+  mutate(Planet = as.factor(Planet))
+
+# Select the features directly in the models
+# Split the data into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(funny_planetary_data$Planet, p = 0.7, list = FALSE)
+train_data <- funny_planetary_data[train_index, ]
+test_data <- funny_planetary_data[-train_index, ]
+
+# Quadratic Discriminant Analysis (QDA)
+qda_model <- qda(Planet ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, data = train_data)
+qda_predictions <- predict(qda_model, test_data)
+
+# Confusion matrix for QDA
+qda_confusion <- confusionMatrix(qda_predictions$class, test_data$Planet)
+print(qda_confusion)
+
+# Naive Bayes Classification
+nb_model <- naiveBayes(Planet ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, data = train_data)
+nb_predictions <- predict(nb_model, test_data)
+
+# Confusion matrix for Naive Bayes
+nb_confusion <- confusionMatrix(nb_predictions, test_data$Planet)
+print(nb_confusion)
+
+# Visualization: QDA Decision Boundaries (Using only two features for visualization simplicity)
+ggplot(train_data, aes(x = SolarRadiation, y = AtmosphericComposition, color = Planet)) +
+  geom_point(size = 3, alpha = 0.6) +
+  stat_ellipse(type = "norm", level = 0.95, linetype = 1, size = 1) +
+  labs(title = "QDA Decision Boundaries for Planetary Classification",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition") +
+  theme_minimal()
+
+# Visualization: Naive Bayes Decision Boundaries (Using only two features for visualization simplicity)
+ggplot(train_data, aes(x = SolarRadiation, y = AtmosphericComposition, color = Planet)) +
+  geom_point(size = 3, alpha = 0.6) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", color = NA, alpha = 0.3) +
+  labs(title = "Naive Bayes Decision Boundaries for Planetary Classification",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition") +
+  scale_fill_viridis_c(option = "C") +
+  theme_minimal()
+
+```

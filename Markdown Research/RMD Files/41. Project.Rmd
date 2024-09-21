@@ -1,0 +1,111 @@
+---
+title: "Project 41"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(broom)         # For tidy model outputs
+library(nnet)          # For multinomial logistic regression
+library(glmnet)        # For elastic net regularization if needed
+
+# Define the path to your dataset
+file_path <- "C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gene_Variation_Analysis.xlsx"
+
+# Load the dataset
+Gene_Variation_Analysis <- read_excel(file_path)
+
+# View the first few rows of the dataset
+head(Gene_Variation_Analysis)
+
+# Convert 'Symbol' and 'Variation' to factors
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(
+    Symbol = as.factor(Symbol),
+    Variation = as.factor(Variation),
+    Outcome = as.factor(Outcome)  # Convert Outcome to factor for multinomial logistic regression
+  )
+
+# ----- 4.4 Logistic Regression with Case-Control Sampling -----
+# Assuming the dataset is already sampled in a case-control manner.
+
+# Build the logistic regression model
+logit_model <- glm(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis, family = binomial)
+
+# Get a tidy summary of the model
+tidy_logit_model <- tidy(logit_model)
+
+# Adjust the intercept (for case-control sampling)
+# Assuming population prevalence pi (true risk) is known, say 0.05
+true_risk <- 0.05
+sampled_risk <- mean(as.numeric(Gene_Variation_Analysis$Outcome) - 1)  # Adjust for factor levels
+logit_model$coefficients[1] <- logit_model$coefficients[1] + log(true_risk / (1 - true_risk)) - log(sampled_risk / (1 - sampled_risk))
+
+# Visualize the model coefficients with shortened and rotated labels
+tidy_logit_model$term <- recode(tidy_logit_model$term,
+                          "Score" = "Score",
+                          "VariationPathogenic" = "Pathogenic",
+                          "VariationLikely Pathogenic" = "Likely Patho",
+                          "VariationCausative Variation" = "Causative",
+                          "SymbolCRX" = "CRX",
+                          "SymbolRPGR" = "RPGR",
+                          "SymbolPRPH2" = "PRPH2",
+                          "SymbolEYS" = "EYS",
+                          "SymbolPRPF8" = "PRPF8",
+                          "SymbolCNGB1" = "CNGB1",
+                          "SymbolIMPDH1" = "IMPDH1",
+                          "SymbolDHDDS" = "DHDDS",
+                          "SymbolRP2" = "RP2",
+                          "SymbolRP1" = "RP1",
+                          "SymbolNR2E3" = "NR2E3")
+
+ggplot(tidy_logit_model, aes(x = term, y = estimate)) +
+  geom_point(color = "blue", size = 3) +
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2, color = "red") +
+  theme_minimal() +
+  labs(title = "Logistic Regression Coefficients with 95% Confidence Intervals",
+       x = "Variables",
+       y = "Coefficient Estimate") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        text = element_text(size = 14))
+
+# ----- 4.4 Multiclass Logistic Regression -----
+# Assuming that the Outcome has more than two classes for this section.
+# Using multinomial logistic regression with nnet package
+
+multi_logit_model <- multinom(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Get a tidy summary of the multinomial logistic regression model
+tidy_multi_logit_model <- tidy(multi_logit_model)
+
+# Visualize the coefficients for each class
+ggplot(tidy_multi_logit_model, aes(x = term, y = estimate, color = y.level)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2) +
+  theme_minimal() +
+  labs(title = "Multiclass Logistic Regression Coefficients with 95% Confidence Intervals",
+       x = "Variables",
+       y = "Coefficient Estimate",
+       color = "Class") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        text = element_text(size = 14))
+
+# Visualizing predicted probabilities for multiclass
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(predicted_class = predict(multi_logit_model, type = "class"))
+
+ggplot(Gene_Variation_Analysis, aes(x = Score, fill = predicted_class)) +
+  geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+  theme_minimal() +
+  labs(title = "Distribution of Predicted Classes by Score",
+       x = "Score",
+       y = "Count",
+       fill = "Predicted Class") +
+  theme(text = element_text(size = 14))
+```

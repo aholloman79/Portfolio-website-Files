@@ -1,0 +1,100 @@
+---
+title: "Project 36"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(readxl)
+
+# Load the dataset
+credit_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/creditpredictions.xlsx")
+
+# Create interaction term between income and number of children
+credit_data <- credit_data %>%
+  mutate(Income_Children_Interaction = AMT_INCOME_TOTAL * CNT_CHILDREN)
+
+# Create quadratic term for age (DAYS_BIRTH)
+credit_data <- credit_data %>%
+  mutate(DAYS_BIRTH_SQ = I(DAYS_BIRTH^2))
+
+# Fit a simple linear model without interactions
+model_simple <- lm(AMT_INCOME_TOTAL ~ CNT_CHILDREN + CODE_GENDER + NAME_INCOME_TYPE, data = credit_data)
+
+# Fit a linear model with the interaction term
+model_interaction <- lm(AMT_INCOME_TOTAL ~ CNT_CHILDREN * AMT_INCOME_TOTAL + CODE_GENDER + NAME_INCOME_TYPE, data = credit_data)
+
+# Fit a linear model with the quadratic term
+model_nonlinear <- lm(AMT_INCOME_TOTAL ~ DAYS_BIRTH + DAYS_BIRTH_SQ + CODE_GENDER + NAME_INCOME_TYPE, data = credit_data)
+
+# Plotting the interaction between income and number of children
+ggplot(credit_data, aes(x = CNT_CHILDREN, y = AMT_INCOME_TOTAL, color = CODE_GENDER)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, aes(linetype = CODE_GENDER)) +
+  facet_wrap(~ NAME_INCOME_TYPE) +
+  labs(title = "Interaction between Number of Children and Income",
+       x = "Number of Children",
+       y = "Total Income") +
+  theme_minimal()
+
+# Plotting the quadratic effect of age on income
+ggplot(credit_data, aes(x = DAYS_BIRTH, y = AMT_INCOME_TOTAL)) +
+  geom_point(alpha = 0.6, color = "steelblue") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "darkred") +
+  labs(title = "Quadratic Effect of Age on Income",
+       x = "Age in Days (Negative for Birthdays)",
+       y = "Total Income") +
+  theme_minimal()
+
+# Plotting the distribution of income by gender
+ggplot(credit_data, aes(x = AMT_INCOME_TOTAL, fill = CODE_GENDER)) +
+  geom_density(alpha = 0.7) +
+  labs(title = "Distribution of Income by Gender",
+       x = "Total Income",
+       y = "Density") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
+
+# Adding fitted values and residuals to the data frame
+credit_data <- credit_data %>%
+  mutate(Fitted_Values = fitted(model_interaction),
+         Residuals = resid(model_interaction))
+
+# Plotting the residuals of the interaction model to check for fit
+ggplot(credit_data, aes(x = Fitted_Values, y = Residuals)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted for Interaction Model",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+# Adding fitted values and residuals to the data frame
+credit_data <- credit_data %>%
+  mutate(Fitted_Values = fitted(model_interaction),
+         Residuals = resid(model_interaction))
+
+# Plotting the residuals of the interaction model to check for fit
+ggplot(credit_data, aes(x = Fitted_Values, y = Residuals)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted for Interaction Model",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+# Plotting the interaction effect
+ggplot(credit_data, aes(x = Income, y = Balance, color = Student)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Interaction Effect of Income and Student Status on Balance",
+       x = "Income",
+       y = "Balance") +
+  theme_minimal()
+
+# Checking if the interaction effect is significant
+anova(model_interaction)
+```

@@ -1,0 +1,196 @@
+---
+title: "Project 42"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(MASS)          # For LDA and QDA
+library(caret)         # For model evaluation and cross-validation
+
+# Define the path to your dataset
+file_path <- "C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gene_Variation_Analysis.xlsx"
+
+# Load the dataset
+Gene_Variation_Analysis <- read_excel(file_path)
+
+# View the first few rows of the dataset
+head(Gene_Variation_Analysis)
+
+# Convert 'Symbol' and 'Variation' to factors, and Outcome to a factor
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(
+    Symbol = as.factor(Symbol),
+    Variation = as.factor(Variation),
+    Outcome = as.factor(Outcome)
+  )
+
+# ----- Linear Discriminant Analysis (LDA) -----
+lda_model <- lda(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Print LDA model summary
+print(lda_model)
+
+# Predict using the LDA model
+lda_predictions <- predict(lda_model)
+
+# Add LDA predictions to the dataset
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(LDA_Prediction = lda_predictions$class)
+
+# Visualize LDA results
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = ..density.., fill = LDA_Prediction)) +
+  geom_histogram(alpha = 0.7, bins = 30, position = "identity") +
+  theme_minimal() +
+  labs(title = "LDA Predictions by Score",
+       x = "Score",
+       y = "Density",
+       fill = "Predicted Class") +
+  theme(text = element_text(size = 14))
+
+# Plot LDA decision boundaries (if Score is the main discriminant variable)
+ggplot(Gene_Variation_Analysis, aes(x = Score, color = Outcome)) +
+  geom_density() +
+  geom_vline(xintercept = lda_model$means, linetype = "dashed") +
+  theme_minimal() +
+  labs(title = "LDA Decision Boundaries",
+       x = "Score",
+       y = "Density",
+       color = "Actual Class") +
+  theme(text = element_text(size = 14))
+
+# ----- Quadratic Discriminant Analysis (QDA) -----
+qda_model <- qda(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Print QDA model summary
+print(qda_model)
+
+# Predict using the QDA model
+qda_predictions <- predict(qda_model)
+
+# Add QDA predictions to the dataset
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(QDA_Prediction = qda_predictions$class)
+
+# Visualize QDA results
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = ..density.., fill = QDA_Prediction)) +
+  geom_histogram(alpha = 0.7, bins = 30, position = "identity") +
+  theme_minimal() +
+  labs(title = "QDA Predictions by Score",
+       x = "Score",
+       y = "Density",
+       fill = "Predicted Class") +
+  theme(text = element_text(size = 14))
+
+# Evaluate LDA and QDA Models
+lda_conf_matrix <- confusionMatrix(lda_predictions$class, Gene_Variation_Analysis$Outcome)
+qda_conf_matrix <- confusionMatrix(qda_predictions$class, Gene_Variation_Analysis$Outcome)
+
+print(lda_conf_matrix)
+print(qda_conf_matrix)
+
+```
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(MASS)          # For LDA and QDA
+library(caret)         # For model evaluation and cross-validation
+
+# Define the path to your dataset
+file_path <- "C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gene_Variation_Analysis.xlsx"
+
+# Load the dataset
+Gene_Variation_Analysis <- read_excel(file_path)
+
+# Convert 'Symbol' and 'Variation' to factors, and Outcome to a factor
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(
+    Symbol = as.factor(Symbol),
+    Variation = as.factor(Variation),
+    Outcome = as.factor(Outcome)
+  )
+
+# ----- Linear Discriminant Analysis (LDA) -----
+lda_model <- lda(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Predict using the LDA model
+lda_predictions <- predict(lda_model)
+
+# Add LDA predictions to the dataset
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(LDA_Prediction = lda_predictions$class)
+
+# Scatter plot for LDA Predictions
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = as.numeric(LDA_Prediction), color = LDA_Prediction)) +
+  geom_jitter(alpha = 0.6, width = 0.3, height = 0.1) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "LDA Predictions by Score",
+       x = "Score",
+       y = "Predicted Class",
+       color = "Predicted Class") +
+  theme(text = element_text(size = 14))
+
+# ----- Quadratic Discriminant Analysis (QDA) -----
+qda_model <- qda(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Predict using the QDA model
+qda_predictions <- predict(qda_model)
+
+# Add QDA predictions to the dataset
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(QDA_Prediction = qda_predictions$class)
+
+# Scatter plot for QDA Predictions
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = as.numeric(QDA_Prediction), color = QDA_Prediction)) +
+  geom_jitter(alpha = 0.6, width = 0.3, height = 0.1) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "QDA Predictions by Score",
+       x = "Score",
+       y = "Predicted Class",
+       color = "Predicted Class") +
+  theme(text = element_text(size = 14))
+
+# ----- Multiclass Logistic Regression -----
+multi_logit_model <- multinom(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis)
+
+# Get a tidy summary of the multinomial logistic regression model
+tidy_multi_logit_model <- tidy(multi_logit_model)
+
+# Visualize the coefficients for each class using a scatter plot
+ggplot(tidy_multi_logit_model, aes(x = term, y = estimate, color = y.level)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Multiclass Logistic Regression Coefficients with 95% Confidence Intervals",
+       x = "Variables",
+       y = "Coefficient Estimate",
+       color = "Class") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        text = element_text(size = 14))
+
+# Visualizing predicted probabilities for multiclass using a scatter plot
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(predicted_class = predict(multi_logit_model, type = "class"))
+
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = as.numeric(predicted_class), color = predicted_class)) +
+  geom_jitter(alpha = 0.6, width = 0.3, height = 0.1) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Distribution of Predicted Classes by Score",
+       x = "Score",
+       y = "Predicted Class",
+       color = "Predicted Class") +
+  theme(text = element_text(size = 14))
+```
+

@@ -1,0 +1,97 @@
+---
+title: "Project 49"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(MASS)       # For LDA and QDA
+library(ggplot2)    # For plotting
+library(caret)      # For creating confusion matrices and cross-validation
+library(dplyr)      # For data manipulation
+library(readxl)     # For reading Excel files
+
+# Load the planetary data
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# Rename columns to shorter names
+colnames(funny_planetary_data) <- c("Planet", "SolarRad", "AtmComp", "DistStar", "Habitability")
+
+# Convert Habitability to a factor for classification
+funny_planetary_data$Habitability <- as.factor(funny_planetary_data$Habitability)
+
+# Define the features and response variable using base R subsetting
+features <- funny_planetary_data[, c("SolarRad", "AtmComp", "DistStar")]
+response <- funny_planetary_data$Habitability
+
+# Split the data into training and test sets
+set.seed(123)  # For reproducibility
+train_index <- createDataPartition(response, p = 0.7, list = FALSE)
+train_data <- funny_planetary_data[train_index, ]
+test_data <- funny_planetary_data[-train_index, ]
+
+# Brief summary of the data
+str(funny_planetary_data)
+
+# Set up cross-validation
+train_control <- trainControl(method = "cv", number = 10)  # 10-fold cross-validation
+
+# Train a logistic regression model with cross-validation
+logistic_cv_model <- train(Habitability ~ SolarRad + AtmComp + DistStar, 
+                           data = train_data, 
+                           method = "glm", 
+                           family = binomial, 
+                           trControl = train_control)
+
+# Print cross-validation results
+print(logistic_cv_model)
+
+# Predict on the test data
+cv_test_probabilities <- predict(logistic_cv_model, newdata = test_data, type = "prob")[,2]
+cv_test_labels <- ifelse(cv_test_probabilities > 0.5, 1, 0)
+
+# Confusion matrix for Logistic Regression with cross-validation
+cv_test_confusion <- table(Predicted = cv_test_labels, Actual = test_data$Habitability)
+print(cv_test_confusion)
+
+# Calculate accuracy for the cross-validated model
+cv_test_accuracy <- mean(cv_test_labels == test_data$Habitability)
+print(paste("Cross-Validated Model Test Accuracy:", round(cv_test_accuracy * 100, 2), "%"))
+
+# Plot the Logistic Regression decision boundary
+ggplot(train_data, aes(x = SolarRad, y = AtmComp, color = Habitability)) +
+  geom_point(size = 3, alpha = 0.7) +
+  stat_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("dodgerblue", "firebrick")) +
+  labs(title = "Logistic Regression Decision Boundary with Cross-Validation",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition",
+       color = "Habitability") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+# Train a KNN model with cross-validation
+knn_cv_model <- train(Habitability ~ SolarRad + AtmComp + DistStar, 
+                      data = train_data, 
+                      method = "knn", 
+                      trControl = train_control, 
+                      preProcess = c("center", "scale"),
+                      tuneLength = 10)
+
+# Print KNN cross-validation results
+print(knn_cv_model)
+
+# Predict on the test data using KNN
+knn_test_predictions <- predict(knn_cv_model, newdata = test_data)
+
+# Confusion matrix for KNN with cross-validation
+knn_test_confusion <- table(Predicted = knn_test_predictions, Actual = test_data$Habitability)
+print(knn_test_confusion)
+
+# Calculate accuracy for KNN cross-validated model
+knn_test_accuracy <- mean(knn_test_predictions == test_data$Habitability)
+print(paste("KNN Cross-Validated Model Test Accuracy:", round(knn_test_accuracy * 100, 2), "%"))
+
+```

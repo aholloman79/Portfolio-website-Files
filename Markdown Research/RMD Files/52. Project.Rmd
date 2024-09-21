@@ -1,0 +1,139 @@
+---
+title: "Project 52"
+author: "Avery Holloman"
+date: "2024-08-26"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(readxl)
+library(caret)
+library(boot)
+library(corrplot)
+
+# Step 1: Data Loading
+# Load the dataset from the specified path
+medicare_medicaid_healthcare <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/medicare_medicaid_healthcare.xlsx")
+
+# Step 2: Data Cleaning
+# 2.1 Handle Missing Values
+medicare_medicaid_healthcare <- medicare_medicaid_healthcare %>% 
+  mutate(across(everything(), ~ ifelse(is.na(.), median(., na.rm = TRUE), .)))
+
+# Step 3: Exploratory Data Analysis (EDA)
+# 3.1 Summary Statistics
+summary(medicare_medicaid_healthcare)
+
+# 3.2 Visualizations - Distribution of a key variable (replace 'variable_name' with actual column name)
+
+# Visualization of a specific variable - Replace 'Age' with your actual column name
+ggplot(medicare_medicaid_healthcare, aes(x = Age)) +  # Replace 'Age' with your column
+  geom_histogram(binwidth = 10, fill = "#3498db", color = "#2c3e50") +  # Blue fill with dark gray borders
+  theme_minimal() +
+  labs(title = "Distribution of Age", x = "Age", y = "Frequency")
+
+
+# Step 3.3: Correlation Analysis with Enhanced Rainbow Color Scheme
+
+# Select only numeric columns for correlation analysis
+numeric_columns <- medicare_medicaid_healthcare %>% 
+  select(Age, Medicare_Coverage, Medicaid_Coverage, Total_Treatment_Cost, Out_of_Pocket_Cost)
+
+# Calculate the correlation matrix
+cor_matrix <- cor(numeric_columns, use = "complete.obs")
+
+# Plot the correlation matrix with a rainbow color scheme
+corrplot(cor_matrix, method = "color", 
+         col = colorRampPalette(rainbow(7))(200),  # Using a rainbow color palette
+         type = "upper", 
+         tl.col = "black", tl.srt = 45,
+         addCoef.col = "black", # Adding correlation coefficients
+         number.cex = 0.7)  # Adjust the size of the coefficient labels
+```
+
+```{r}
+# Step 4.1: Data Splitting
+# Assume you want to predict 'Total_Treatment_Cost'
+
+set.seed(123)
+trainIndex <- createDataPartition(medicare_medicaid_healthcare$Total_Treatment_Cost, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+
+# Splitting the data into training and testing sets
+train_data <- medicare_medicaid_healthcare[trainIndex,]
+test_data <- medicare_medicaid_healthcare[-trainIndex,]
+```
+
+```{r}
+# Step 4.2: Resampling - Bootstrap example
+
+# Define a function that calculates the mean of Total_Treatment_Cost
+mean_treatment_cost <- function(data, indices) {
+  # Subset the data based on the resampled indices
+  resampled_data <- data[indices, ]
+  # Return the mean of Total_Treatment_Cost
+  return(mean(resampled_data$Total_Treatment_Cost))
+}
+
+# Perform bootstrap resampling
+set.seed(123)
+bootstrap_sample <- boot(data = train_data, statistic = mean_treatment_cost, R = 1000)
+
+# View bootstrap results
+print(bootstrap_sample)
+```
+
+```{r}
+# Step 5: Model Implementation
+# Example: Linear Regression Model
+
+# Replace 'target_variable' with 'Total_Treatment_Cost' or your actual target variable
+model <- lm(Total_Treatment_Cost ~ ., data = train_data)
+
+# View summary of the model
+summary(model)
+```
+
+```{r}
+# Step 6: Model Validation
+# Cross-Validation
+
+# Replace 'target_variable' with 'Total_Treatment_Cost' or your actual target variable
+cv_results <- train(Total_Treatment_Cost ~ ., data = train_data, method = "lm", 
+                    trControl = trainControl(method = "cv", number = 10))
+
+# View cross-validation results
+print(cv_results)
+```
+
+```{r}
+
+# Residual Analysis
+# Residuals vs Fitted plot
+plot(model$fitted.values, model$residuals, 
+     col = "#8e44ad", 
+     main = "Residuals vs Fitted Values", 
+     xlab = "Fitted Values", 
+     ylab = "Residuals")
+abline(h = 0, col = "red", lwd = 2)  # Adding a horizontal line at 0 for reference
+# Model Summary
+summary(model)
+
+```
+
+```{r}
+# Residual Analysis
+# Residuals vs Fitted plot
+plot(model$fitted.values, model$residuals, 
+     col = "#8e44ad", 
+     main = "Residuals vs Fitted Values", 
+     xlab = "Fitted Values", 
+     ylab = "Residuals")
+
+# Adding a loess curve to fit the data points
+loess_fit <- loess(model$residuals ~ model$fitted.values)
+lines(model$fitted.values, predict(loess_fit), col = "red", lwd = 2)
+```

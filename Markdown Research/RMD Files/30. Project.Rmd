@@ -1,0 +1,67 @@
+---
+title: "30 and 31.1 Exploring the Relationship between Age, Medication Dosage, and Treatment Outcome by Gender: A Data-Driven Analysis"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# Preview the dataset
+head(dataset)
+
+# Fit a multiple linear regression model
+# Example model: Predicting 'Outcome' based on 'Age', 'Gender', and 'Dosage_Med1_mg'
+# We'll convert Outcome to a binary numeric variable for simplicity in this model
+dataset <- dataset %>%
+  mutate(Outcome_Binary = ifelse(Outcome == "Improved", 1, 0),
+         Gender = factor(Gender, levels = c("Male", "Female")))
+
+model <- lm(Outcome_Binary ~ Age + Gender + Dosage_Med1_mg, data = dataset)
+
+# Summary of the model
+summary(model)
+
+# Plotting the relationship between Age, Dosage_Med1_mg, and Outcome using ggplot2
+
+# Scatter plot with regression lines
+ggplot(dataset, aes(x = Age, y = Dosage_Med1_mg, color = as.factor(Outcome_Binary))) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "black") +
+  labs(title = "Relationship between Age, Dosage of Medication, and Outcome",
+       x = "Age",
+       y = "Dosage of Medication (mg)",
+       color = "Outcome (Binary)") +
+  theme_minimal() +
+  scale_color_manual(values = c("1" = "#2C7BB6", "0" = "#D7191C")) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Faceted plot to show the effect of gender
+ggplot(dataset, aes(x = Age, y = Dosage_Med1_mg, color = as.factor(Outcome_Binary))) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "black") +
+  labs(title = "Relationship between Age, Dosage of Medication, and Outcome by Gender",
+       x = "Age",
+       y = "Dosage of Medication (mg)",
+       color = "Outcome (Binary)") +
+  theme_minimal() +
+  facet_wrap(~ Gender) +
+  scale_color_manual(values = c("1" = "#2C7BB6", "0" = "#D7191C")) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Residuals plot to check model assumptions
+ggplot(data = model, aes(.fitted, .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+```

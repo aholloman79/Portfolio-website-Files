@@ -1,0 +1,69 @@
+---
+title: "Understanding Statistical Learning in the Context of Planetary Research"
+author: "Avery Holloman"
+date: "2024-08-18"
+output: html_document
+---
+
+```{r}
+# Understanding Statistical Learning in the Context of Planetary Research
+# To introduce the concept of statistical learning, let's consider a scenario where we are researchers tasked with exploring the relationship between various planetary attributes and the likelihood of finding habitable conditions on those planets. Imagine we have a dataset that includes information from 200 different planets, with details such as the amount of solar radiation they receive, their atmospheric composition, and their distance from their respective stars. Our objective is to determine how these factors influence the habitability of these planets.The goal is to develop a model that accurately captures the relationship between the planetary attributes and habitability, allowing us to make predictions and derive insights from the data. This understanding provides a foundation for exploring more complex theoretical concepts and tools used to evaluate and refine the models we create.
+```
+
+```{r}
+# I have already installed the packages but gggplot2 is for my plots and the rest is for data manipulation 
+library(ggplot2)
+library(caret)
+library(dplyr)
+
+# Setting a seed heads with redundancy 
+set.seed(42)
+
+# Since I could not find any data I decided to simulate a ficticious data set of 200 potential planets as practice and then measuring solar radiation in arbitrary units with an adjusted atmospheric composition scale from 0 to 100 kto measure the distance from the stars in specific units associated with (AU) in particularly to define a true relationship for habitability  by plotting a linear combination of attributes associated with habitability for living creatures
+n <- 200
+planets <- data.frame(
+  SolarRadiation = runif(n, 0, 1000), 
+  AtmosphericComposition = runif(n, 0, 100), 
+  DistanceFromStar = runif(n, 0.1, 10) 
+)
+
+planets$HabitabilityScore <- 0.5 * planets$SolarRadiation - 0.3 * planets$AtmosphericComposition + 
+                             0.2 * planets$DistanceFromStar + rnorm(n, mean = 0, sd = 5)
+
+# Now I will make it binary (0 = Not Habitable, 1 = Habitable)
+planets$HabitabilityStatus <- ifelse(planets$HabitabilityScore > median(planets$HabitabilityScore), 1, 0)
+
+# Lets take a look at the summary and head function to check if my simulated data has not gone haywire and I need to adjust the data types or add extra potential columns and rows 
+summary(planets)
+head(planets)
+
+# Seems good, now lets take a better visual but first I notice that HabitabilityStatus needs to be a factor and then I will plot the two variables against the x and y axis 
+ggplot(planets, aes(x = SolarRadiation, y = HabitabilityScore, color = as.factor(HabitabilityStatus))) +
+  geom_point() +
+  labs(title = "Habitability Score vs Solar Radiation", x = "Solar Radiation", y = "Habitability Score")
+
+# In order to test my prediction I need to  split the data into two parts for testing, which is typically the 70/30 split and I will train 70% of the data and the rest of the 30% will be test sets from the data. 
+set.seed(123)
+trainIndex <- createDataPartition(planets$HabitabilityStatus, p = 0.7, list = FALSE)
+trainData <- planets[trainIndex, ]
+testData <- planets[-trainIndex, ]
+
+# assigning the name "model" for my logistic regression model to predict habitability of planets
+model <- glm(HabitabilityStatus ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, 
+             data = trainData, family = binomial)
+
+# Summary of the model
+summary(model)
+
+# Predict habitability on the test set
+testData$PredictedProbability <- predict(model, newdata = testData, type = "response")
+testData$PredictedClass <- ifelse(testData$PredictedProbability > 0.5, 1, 0)
+
+# Now lets evaluate the model performance
+confusionMatrix(as.factor(testData$PredictedClass), as.factor(testData$HabitabilityStatus))
+
+# finally lets take a look at my predictions
+ggplot(testData, aes(x = PredictedProbability, fill = as.factor(HabitabilityStatus))) +
+  geom_histogram(position = "dodge", bins = 30) +
+  labs(title = "Predicted Probabilities for Habitable Status", x = "Predicted Probability", fill = "Actual Status")
+```

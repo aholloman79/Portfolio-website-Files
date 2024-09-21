@@ -1,0 +1,93 @@
+---
+title: "Project 47"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(MASS)       # For LDA and QDA
+library(ggplot2)    # For plotting
+library(caret)      # For creating confusion matrices
+library(readxl)     # For reading Excel files
+
+# Load the planetary data
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# View the first few rows and structure of the dataset
+head(funny_planetary_data)
+str(funny_planetary_data)
+
+# Ensure the 'Habitability' column is a factor (since it seems binary)
+funny_planetary_data$Habitability <- as.factor(funny_planetary_data$Habitability)
+
+# Define the features and response variable
+features <- funny_planetary_data[, c("SolarRadiation", "AtmosphericComposition", "DistanceFromStar")]
+response <- funny_planetary_data$Habitability
+
+# Split data into training and test sets (70% train, 30% test)
+set.seed(123)
+train_index <- createDataPartition(funny_planetary_data$Habitability, p = 0.7, list = FALSE)
+train_data <- funny_planetary_data[train_index, ]
+test_data <- funny_planetary_data[-train_index, ]
+
+# Fit the Logistic Regression model on the training data
+logistic_model <- glm(Habitability ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, 
+                      data = train_data, 
+                      family = binomial)
+
+# Predict on the test data using the logistic model
+logistic_test_probabilities <- predict(logistic_model, newdata = test_data, type = "response")
+logistic_test_labels <- ifelse(logistic_test_probabilities > 0.5, 1, 0)
+
+# Confusion matrix for logistic regression
+logistic_test_confusion <- table(Predicted = logistic_test_labels, Actual = test_data$Habitability)
+print(logistic_test_confusion)
+
+# Calculate accuracy for logistic model
+logistic_test_accuracy <- mean(logistic_test_labels == test_data$Habitability)
+print(paste("Logistic Regression Test Accuracy:", round(logistic_test_accuracy * 100, 2), "%"))
+
+# Plot the logistic regression decision boundary
+ggplot(train_data, aes(x = SolarRadiation, y = AtmosphericComposition, color = Habitability)) +
+  geom_point(size = 3, alpha = 0.7) +
+  stat_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("dodgerblue", "firebrick")) +
+  labs(title = "Logistic Regression Decision Boundary",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition",
+       color = "Habitability") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+# LDA model
+lda_model <- lda(Habitability ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, data = train_data)
+
+# View the LDA model summary
+print(lda_model)
+
+# Predict on the test data using LDA
+lda_predictions <- predict(lda_model, newdata = test_data)
+lda_test_labels <- lda_predictions$class
+
+# Confusion matrix for LDA
+lda_test_confusion <- table(Predicted = lda_test_labels, Actual = test_data$Habitability)
+print(lda_test_confusion)
+
+# Calculate accuracy for LDA model
+lda_test_accuracy <- mean(lda_test_labels == test_data$Habitability)
+print(paste("LDA Test Accuracy:", round(lda_test_accuracy * 100, 2), "%"))
+
+# Final visualization: Test data with LDA predicted habitability
+ggplot(test_data, aes(x = SolarRadiation, y = AtmosphericComposition, color = lda_test_labels)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_manual(values = c("springgreen3", "orangered2")) +
+  labs(title = "Test Data: LDA Predicted Habitability",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition",
+       color = "Predicted Habitability") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+```

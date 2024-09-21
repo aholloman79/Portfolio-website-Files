@@ -1,0 +1,87 @@
+---
+title: Model Selection and Bias Variance Tradeoff how different polynomial degrees
+  affect the model's performance
+author: "Avery Holloman"
+date: "2024-08-23"
+output: html_document
+---
+
+```{r}
+# I will need the gpplot2 library for my graphs 
+library(ggplot2)
+
+# I will assign the orginal name of the dataset to just "data" to simplify things 
+data <- warehouse_logistics_analysis
+
+# Next, I will define the predictor (x) and response (y) variables in my dataset
+x <- data$Shipment_Volume
+y <- data$Cost
+
+# Next, I will fit a polynomial model various different degrees of freedom
+model_1 <- lm(y ~ poly(x, 1, raw = TRUE), data = data)
+model_3 <- lm(y ~ poly(x, 3, raw = TRUE), data = data)
+model_10 <- lm(y ~ poly(x, 10, raw = TRUE), data = data)
+
+# Now I have to create a sequence of x values for for my prediction
+x_grid <- seq(min(x), max(x), length.out = 100)
+
+# Now its time to predict the model
+y_pred_1 <- predict(model_1, newdata = data.frame(x = x_grid))
+y_pred_3 <- predict(model_3, newdata = data.frame(x = x_grid))
+y_pred_10 <- predict(model_10, newdata = data.frame(x = x_grid))
+
+# Things didn't look so well so I will combine the x_grid and predicted values into a data frame for better plotting of my data
+pred_data <- data.frame(
+  x = rep(x_grid, 3),
+  y = c(y_pred_1, y_pred_3, y_pred_10),
+  Degree = factor(rep(c(1, 3, 10), each = 100))
+)
+
+# Next I have decided to create a better plot with the different polynomial fits to get a better grasp on the data but I need to use geom_point to make the points on the data better visiable and add a little scale of the values
+plot_polynomial_fits <- ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(data = pred_data, aes(x = x, y = y, color = Degree), size = 1) +
+  scale_color_manual(values = c("orange", "blue", "black"), 
+                     labels = c("Degree 1", "Degree 3", "Degree 10")) +
+  ggtitle("Polynomial Fits (Degrees 1, 3, 10)") +
+  theme_minimal()
+
+# Lets take a look at the plot by utilizing the plot function
+print(plot_polynomial_fits)
+
+```
+
+```{r}
+# I named my function calculate_mse to calculate MSE because I utilized the "cost" variable for my calculations
+calculate_mse <- function(model, data) {
+  predictions <- predict(model, newdata = data)
+  mse <- mean((data$Cost - predictions)^2)  
+  return(mse)
+}
+
+# To get a better idea I decided to use 3 models to calculate the different MSE for my models
+mse_1 <- calculate_mse(model_1, data)
+mse_3 <- calculate_mse(model_3, data)
+mse_10 <- calculate_mse(model_10, data)
+
+# But first I must prepare the data for my  MSE plot by creating 3 different degrees of freedom 
+mse_data <- data.frame(
+  Degree = c(1, 3, 10),
+  MSE = c(mse_1, mse_3, mse_10)
+)
+
+# Now lets take a look of my MSE plot by defining the values with geom_point and giving it a title of the operation that I will be performing which is "Mean Squared Error vs. Polynomial Degree
+plot_mse <- ggplot(mse_data, aes(x = Degree, y = MSE)) +
+  geom_point(color = "red", size = 3) +
+  geom_line(aes(group = 1), color = "blue", size = 1) +
+  ggtitle("Mean Squared Error vs. Polynomial Degree") +
+  theme_minimal()
+
+# Lets tak a look at the plot with a simple print function
+print(plot_mse)
+
+```
+
+
+
+

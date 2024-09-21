@@ -1,0 +1,161 @@
+---
+title: "Project 40"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(broom) # For tidy model outputs
+
+# Define the path to your dataset
+file_path <- "C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gene_Variation_Analysis.xlsx"
+
+# Load the dataset
+Gene_Variation_Analysis <- read_excel(file_path)
+
+# View the first few rows of the dataset
+head(Gene_Variation_Analysis)
+
+# Convert 'Symbol' and 'Variation' to factors
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(
+    Symbol = as.factor(Symbol),
+    Variation = as.factor(Variation)
+  )
+
+# Build the multivariate logistic regression model
+model <- glm(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis, family = binomial)
+
+# Get a tidy summary of the model
+tidy_model <- tidy(model)
+
+# Print the tidy summary of the model
+print(tidy_model)
+
+# Visualize the model coefficients with confidence intervals
+ggplot(tidy_model, aes(x = term, y = estimate)) +
+  geom_point(color = "blue", size = 3) +
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2, color = "red") +
+  theme_minimal() +
+  labs(title = "Model Coefficients with 95% Confidence Intervals",
+       x = "Variables",
+       y = "Coefficient Estimate") +
+  theme(text = element_text(size = 14))
+
+# Visualizing Predicted Probabilities
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(predicted_prob = predict(model, type = "response"))
+
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = predicted_prob, color = Symbol)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Predicted Probability by Score and Symbol",
+       x = "Score",
+       y = "Predicted Probability",
+       color = "Gene Symbol") +
+  theme(text = element_text(size = 14))
+
+# Visualizing the impact of 'Variation' on 'Outcome'
+ggplot(Gene_Variation_Analysis, aes(x = Variation, fill = as.factor(Outcome))) +
+  geom_bar(position = "fill") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Impact of Variation on Outcome",
+       x = "Variation Type",
+       y = "Proportion",
+       fill = "Outcome") +
+  theme(text = element_text(size = 14))
+
+```
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(broom) # For tidy model outputs
+
+# Define the path to your dataset
+file_path <- "C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gene_Variation_Analysis.xlsx"
+
+# Load the dataset
+Gene_Variation_Analysis <- read_excel(file_path)
+
+# View the first few rows of the dataset
+head(Gene_Variation_Analysis)
+
+# Convert 'Symbol' and 'Variation' to factors
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(
+    Symbol = as.factor(Symbol),
+    Variation = as.factor(Variation)
+  )
+
+# Build the multivariate logistic regression model
+model <- glm(Outcome ~ Score + Variation + Symbol, data = Gene_Variation_Analysis, family = binomial)
+
+# Get a tidy summary of the model
+tidy_model <- tidy(model)
+
+# Shorten the term labels
+tidy_model$term <- recode(tidy_model$term,
+                          "Score" = "Score",
+                          "VariationPathogenic" = "Pathogenic",
+                          "VariationLikely Pathogenic" = "Likely Patho",
+                          "VariationCausative Variation" = "Causative",
+                          "SymbolCRX" = "CRX",
+                          "SymbolRPGR" = "RPGR",
+                          "SymbolPRPH2" = "PRPH2",
+                          "SymbolEYS" = "EYS",
+                          "SymbolPRPF8" = "PRPF8",
+                          "SymbolCNGB1" = "CNGB1",
+                          "SymbolIMPDH1" = "IMPDH1",
+                          "SymbolDHDDS" = "DHDDS",
+                          "SymbolRP2" = "RP2",
+                          "SymbolRP1" = "RP1",
+                          "SymbolNR2E3" = "NR2E3")
+
+# Visualize the model coefficients with shortened and rotated labels
+ggplot(tidy_model, aes(x = term, y = estimate)) +
+  geom_point(color = "blue", size = 3) +
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error), width = 0.2, color = "red") +
+  theme_minimal() +
+  labs(title = "Model Coefficients with 95% Confidence Intervals",
+       x = "Variables",
+       y = "Coefficient Estimate") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        text = element_text(size = 14))
+
+# Visualizing Predicted Probabilities
+Gene_Variation_Analysis <- Gene_Variation_Analysis %>%
+  mutate(predicted_prob = predict(model, type = "response"))
+
+ggplot(Gene_Variation_Analysis, aes(x = Score, y = predicted_prob, color = Symbol)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Predicted Probability by Score and Symbol",
+       x = "Score",
+       y = "Predicted Probability",
+       color = "Gene Symbol") +
+  theme(text = element_text(size = 14))
+
+# Visualizing the impact of 'Variation' on 'Outcome'
+ggplot(Gene_Variation_Analysis, aes(x = Variation, fill = as.factor(Outcome))) +
+  geom_bar(position = "fill") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Impact of Variation on Outcome",
+       x = "Variation Type",
+       y = "Proportion",
+       fill = "Outcome") +
+  theme(text = element_text(size = 14))
+```
+
+
+

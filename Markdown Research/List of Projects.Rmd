@@ -1,0 +1,626 @@
+```{r}
+#Linear Models and Least Squares
+
+# Fitting a linear model
+model <- lm(y ~ x1 + x2, data = your_data)
+summary(model)
+```
+
+```{r}
+#Nearest-Neighbor Methods
+
+# k-Nearest Neighbors using the 'class' package
+library(class)
+pred <- knn(train = train_data, test = test_data, cl = train_labels, k = 5)
+```
+
+```{r}
+#Roughness Penalty and Bayesian Methods
+
+# Bayesian linear regression using the 'rstanarm' package
+library(rstanarm)
+model <- stan_glm(y ~ x1 + x2, data = your_data, prior = normal())
+```
+
+```{r}
+#Kernel Methods and Local Regression
+
+# Local Polynomial Regression Fitting using 'locfit'
+library(locfit)
+model <- locfit(y ~ lp(x, deg = 2), data = your_data)
+plot(model)
+```
+
+```{r}
+#Basis Functions and Dictionary Methods
+
+# Using spline basis functions in a linear model
+library(splines)
+model <- lm(y ~ bs(x, df = 4), data = your_data)
+```
+
+```{r}
+#Best-Subset Selection
+
+# Best subset selection using 'leaps'
+library(leaps)
+model <- regsubsets(y ~ ., data = your_data, nvmax = 5)
+summary(model)
+```
+
+```{r}
+#Best-Subset Selection
+
+## Best subset selection using 'leaps'
+library(leaps)
+model <- regsubsets(y ~ ., data = your_data, nvmax = 5)
+summary(model)
+```
+
+```{r}
+#Forward- and Backward-Stepwise Selection
+
+# Stepwise selection using 'stepAIC'
+library(MASS)
+model <- stepAIC(lm(y ~ ., data = your_data), direction = "both")
+```
+
+```{r}
+#Forward-Stagewise Regression
+
+# Forward stagewise regression using 'glmnet'
+library(glmnet)
+model <- glmnet(x, y, alpha = 0, nlambda = 1000)
+```
+
+```{r}
+#Ridge Regression
+
+# Ridge regression using 'glmnet'
+library(glmnet)
+model <- glmnet(x, y, alpha = 0)
+```
+
+```{r}
+#The Lasso
+
+# Lasso regression using 'glmnet'
+model <- glmnet(x, y, alpha = 1)
+```
+
+```{r}
+#Least Angle Regression
+
+# LAR using 'lars' package
+library(lars)
+model <- lars(x, y, type = "lar")
+```
+
+```{r}
+#Principal Components Regression
+
+# PCR using 'pls' package
+library(pls)
+model <- pcr(y ~ ., data = your_data, validation = "CV")
+```
+
+```{r}
+#Partial Least Squares
+
+# PLS using 'pls' package
+model <- plsr(y ~ ., data = your_data, validation = "CV")
+```
+
+```{r}
+#Incremental Forward Stagewise Regression
+
+# Incremental forward stagewise using 'fwht'
+# Assuming your_data is your data frame
+model <- fwht(y ~ ., data = your_data)
+```
+
+```{r}
+#Piecewise-Linear Path Algorithms
+
+# Piecewise linear regression using 'segmented' package
+library(segmented)
+model <- segmented(lm(y ~ x, data = your_data), seg.Z = ~x, psi = list(x = c(20, 40)))
+```
+
+```{r}
+#The Dantzig Selector
+
+# Dantzig selector using 'flare' package
+library(flare)
+model <- slim(y, x, lambda = 0.1, method = "dantzig")
+```
+
+```{r}
+#The Grouped Lasso
+
+# Grouped Lasso using 'grpreg' package
+library(grpreg)
+model <- grpreg(X, y, group = group)
+```
+
+```{r}
+#Pathwise Coordinate Optimization
+
+# Using 'glmnet' for pathwise coordinate descent
+model <- glmnet(x, y)
+```
+
+```{r}
+#Linear Discriminant Analysis
+
+# LDA using 'MASS' package
+library(MASS)
+model <- lda(y ~ ., data = your_data)
+```
+
+```{r}
+#Regularized Discriminant Analysis
+
+# Regularized Discriminant Analysis using 'klaR' package
+library(klaR)
+model <- rda(y ~ ., data = your_data)
+```
+
+```{r}
+#Reduced-Rank Linear Discriminant Analysis
+
+# RR-LDA using 'rrlda' package
+library(rrlda)
+model <- rrlda(y ~ ., data = your_data)
+```
+
+```{r}
+#Logistic Regression
+
+# Logistic regression using 'glm'
+model <- glm(y ~ ., data = your_data, family = binomial)
+```
+
+```{r}
+#L1 Regularized Logistic Regression
+
+# L1 Logistic Regression using 'glmnet'
+model <- glmnet(x, y, family = "binomial", alpha = 1)
+```
+
+```{r}
+#Rosenblatt’s Perceptron Learning Algorithm
+
+# Perceptron algorithm implementation
+library(RSNNS)
+model <- mlp(x, y, size = c(1), learnFunc = "Std_Backpropagation")
+```
+
+```{r}
+#Optimal Separating Hyperplanes
+
+# Support Vector Machine for classification
+library(e1071)
+model <- svm(y ~ ., data = your_data, kernel = "linear")
+```
+
+```{r}
+#Piecewise Polynomials and Splines
+
+# Splines using 'splines' package
+model <- lm(y ~ bs(x, degree = 3), data = your_data)
+```
+
+```{r}
+#Natural Cubic Splines
+
+# Natural cubic splines using 'splines' package
+model <- lm(y ~ ns(x, df = 4), data = your_data)
+```
+
+```{r}
+#Smoothing Splines
+
+# Smoothing splines using 'smooth.spline'
+model <- smooth.spline(x, y)
+```
+
+```{r}
+#Nonparametric Logistic Regression
+
+# Nonparametric logistic regression using 'np' package
+library(np)
+model <- npreg(y ~ x1 + x2, data = your_data)
+```
+
+```{r}
+#Wavelet Smoothing
+
+# Wavelet smoothing using 'wavethresh' package
+library(wavethresh)
+model <- wavethresh::wd(y)
+```
+
+```{r}
+#Local Linear Regression
+
+# Local Linear Regression using 'locfit' package
+library(locfit)
+model <- locfit(y ~ x, data = your_data)
+```
+
+```{r}
+#Local Polynomial Regression
+
+# Local Polynomial Regression using 'np' package
+model <- npreg(y ~ x1 + x2, data = your_data)
+```
+
+```{r}
+#Kernel Density Estimation
+
+# KDE using 'MASS' package
+library(MASS)
+density_est <- kde2d(x, y, n = 50)
+```
+
+```{r}
+#Radial Basis Functions
+
+# Radial Basis Function Network using 'RSNNS' package
+library(RSNNS)
+model <- rbf(x, y, size = 5)
+```
+
+```{r}
+#Mixture Models for Density Estimation and Classification
+
+# Mixture models using 'mclust' package
+library(mclust)
+model <- Mclust(y)
+```
+
+```{r}
+#K-Fold Cross-Validation
+# K-fold CV using 'caret' package
+library(caret)
+train_control <- trainControl(method = "cv", number = 10)
+model <- train(y ~ ., data = your_data, method = "lm", trControl = train_control)
+```
+
+```{r}
+#Bootstrap Methods
+
+# Bootstrap using 'boot' package
+library(boot)
+model <- boot(your_data, statistic = function(data, i) mean(data[i,]), R = 1000)
+```
+
+```{r}
+#Maximum Likelihood Methods
+
+# Maximum Likelihood Estimation using 'optim'
+model <- optim(par = initial_values, fn = log_likelihood_function)
+```
+
+```{r}
+#Bayesian Methods
+
+# Bayesian Regression using 'rstanarm'
+library(rstanarm)
+model <- stan_glm(y ~ x1 + x2, data = your_data, prior = normal())
+```
+
+```{r}
+#The EM Algorithm
+
+# EM Algorithm for Gaussian Mixture Models using 'mclust'
+library(mclust)
+model <- Mclust(y)
+```
+
+```{r}
+#MCMC for Sampling from the Posterior
+
+# MCMC using 'rstan'
+library(rstan)
+fit <- stan(file = 'your_model.stan')
+```
+
+```{r}
+#Bagging
+
+# Bagging using 'ipred' package
+library(ipred)
+model <- bagging(y ~ ., data = your_data)
+```
+
+```{r}
+#Stochastic Search: Bumping
+
+# Bumping using 'randomForest' package
+library(randomForest)
+model <- randomForest(y ~ ., data = your_data, replace = TRUE, keep.inbag = TRUE)
+```
+
+```{r}
+#Generalized Additive Models
+
+# GAM using 'mgcv' package
+library(mgcv)
+model <- gam(y ~ s(x1) + s(x2), data = your_data)
+```
+
+```{r}
+#Regression Trees
+
+# Regression Trees using 'rpart' package
+library(rpart)
+model <- rpart(y ~ ., data = your_data)
+```
+
+```{r}
+#Classification Trees
+
+# Classification Trees using 'rpart' package
+model <- rpart(y ~ ., data = your_data, method = "class")
+```
+
+```{r}
+#PRIM: Bump Hunting
+
+# PRIM using 'prim' package
+library(prim)
+model <- prim.box(y ~ x1 + x2, data = your_data)
+```
+
+```{r}
+#MARS: Multivariate Adaptive Regression Splines
+
+# MARS using 'earth' package
+library(earth)
+model <- earth(y ~ ., data = your_data)
+```
+
+```{r}
+#Boosting Methods
+
+# Boosting using 'gbm' package
+library(gbm)
+model <- gbm(y ~ ., data = your_data, distribution = "gaussian", n.trees = 100)
+```
+
+```{r}
+#Gradient Boosting
+
+# Gradient Boosting using 'xgboost'
+library(xgboost)
+model <- xgboost(data = as.matrix(your_data), label = y, nrounds = 100)
+```
+
+```{r}
+#Projection Pursuit Regression
+
+# Projection Pursuit Regression using 'ppr' function in base R
+model <- ppr(y ~ x, data = your_data, nterms = 2)
+```
+
+```{r}
+#Neural Networks
+
+# Neural Networks using 'nnet' package
+library(nnet)
+model <- nnet(y ~ ., data = your_data, size = 5)
+```
+
+```{r}
+#Support Vector Classifier
+
+# SVM using 'e1071' package
+library(e1071)
+model <- svm(y ~ ., data = your_data)
+```
+
+```{r}
+#Support Vector Machines for Regression
+
+# SVM for Regression using 'e1071'
+model <- svm(y ~ ., data = your_data, type = "eps-regression")
+```
+
+```{r}
+#Flexible Discriminant Analysis
+
+# FDA using 'mda' package
+library(mda)
+model <- fda(y ~ ., data = your_data)
+```
+
+```{r}
+#Penalized Discriminant Analysis
+
+# Penalized DA using 'mda' package
+model <- penalizedLDA(y ~ ., data = your_data)
+```
+
+```{r}
+#Mixture Discriminant Analysis
+
+# Mixture DA using 'mda' package
+model <- mda(y ~ ., data = your_data)
+```
+
+```{r}
+#K-means Clustering
+
+# K-means Clustering using 'stats' package
+model <- kmeans(your_data, centers = 3)
+```
+
+```{r}
+#Learning Vector Quantization
+
+# LVQ using 'class' package
+library(class)
+model <- lvqinit(x, y)
+```
+
+```{r}
+#Gaussian Mixtures
+
+# Gaussian Mixtures using 'mclust' package
+library(mclust)
+model <- Mclust(your_data)
+```
+
+```{r}
+#k-Nearest-Neighbor Classifiers
+
+# k-NN Classifiers using 'class' package
+library(class)
+model <- knn(train, test, cl, k = 3)
+```
+
+```{r}
+#Adaptive Nearest-Neighbor Methods
+
+# Adaptive k-NN using 'FNN' package
+library(FNN)
+model <- knn.cv(train, cl, k = 3)
+```
+
+```{r}
+#Apriori Algorithm
+
+# Apriori Algorithm using 'arules' package
+library(arules)
+rules <- apriori(your_data, parameter = list(supp = 0.1, conf = 0.8))
+```
+
+```{r}
+#Hierarchical Clustering
+
+# Hierarchical Clustering using 'stats' package
+d <- dist(your_data)
+model <- hclust(d)
+plot(model)
+```
+
+```{r}
+#Self-Organizing Maps
+
+# SOM using 'kohonen' package
+library(kohonen)
+model <- som(your_data, grid = somgrid(5, 5, "hexagonal"))
+```
+
+```{r}
+#Principal Components
+
+# PCA using 'stats' package
+model <- prcomp(your_data, scale. = TRUE)
+```
+
+```{r}
+#Spectral Clustering
+
+# Spectral Clustering using 'kernlab' package
+library(kernlab)
+model <- specc(your_data, centers = 3)
+```
+
+```{r}
+#Kernel Principal Components
+
+# Kernel PCA using 'kernlab'
+model <- kpca(~., data = your_data)
+```
+
+```{r}
+#Sparse Principal Components
+
+# Sparse PCA using 'elasticnet' package
+library(elasticnet)
+model <- spca(your_data, K = 3)
+```
+
+```{r}
+#Non-negative Matrix Factorization
+
+# NMF using 'NMF' package
+library(NMF)
+model <- nmf(your_data, rank = 2)
+```
+
+```{r}
+#Independent Component Analysis
+
+# ICA using 'fastICA' package
+library(fastICA)
+model <- fastICA(your_data, n.comp = 3)
+```
+
+```{r}
+#Exploratory Projection Pursuit
+
+# Projection Pursuit using 'ppfun' package
+library(ppfun)
+model <- ppfun(your_data)
+```
+
+```{r}
+#Multidimensional Scaling
+
+# MDS using 'MASS' package
+library(MASS)
+model <- isoMDS(dist(your_data))
+```
+
+```{r}
+#Random Forests
+
+# Random Forest using 'randomForest' package
+library(randomForest)
+model <- randomForest(y ~ ., data = your_data)
+```
+
+```{r}
+#Rule Ensembles
+
+# Rule Ensembles using 'inTrees' package
+library(inTrees)
+model <- buildLearner(your_data)
+```
+
+```{r}
+#Regularized Discriminant Analysis
+
+# RDA using 'klaR' package
+library(klaR)
+model <- rda(y ~ ., data = your_data)
+```
+
+```{r}
+#Lasso for Functional Data
+
+# Lasso for functional data using 'fda' package
+library(fda)
+model <- fda(y ~ x, data = your_data)
+```
+
+```{r}
+#Supervised Principal Components
+
+# SPC using 'pls' package
+library(pls)
+model <- pcr(y ~ ., data = your_data, validation = "CV")
+```
+
+```{r}
+#Fused Lasso for Functional Data
+
+# Fused Lasso using 'genlasso' package
+library(genlasso)
+model <- fusedlasso(your_data$y, D = your_data$D)
+```
+

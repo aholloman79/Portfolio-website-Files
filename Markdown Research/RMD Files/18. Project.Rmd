@@ -1,0 +1,142 @@
+---
+title: "SpaceCeleb_VA_Outcomes"
+author: "Avery Holloman"
+date: "2024-08-18"
+output: html_document
+---
+
+```{r}
+# I utilized the readxl library function to read in the data from my folder
+library(readxl)
+# I utilize gpplot2 for plotting 
+library(ggplot2)
+# gridExtra allows to arrange multiple plots to be seen 
+library(gridExtra)  
+SpaceCeleb_VA_Outcomes <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/SpaceCeleb_VA_Outcomes.xls")
+```
+
+```{r}
+# Next I look at the head matrix function instead of the normal head() function but they still produce the same results 
+head.matrix(SpaceCeleb_VA_Outcomes)
+```
+
+
+```{r}
+# Now lets plot the gridfunction from my library I loaded and with some colors and smoothing in the geom_smooth method in blue to represent the linear model fit and I will do this for all three of the plots. Plus adding some titles in the plot them aligning them together
+plot_three_variables <- function(df, var1, var2, var3) {
+  p1 <- ggplot(df, aes(x = .data[[var1]], y = Score)) +
+    geom_point(color = "red") +  # Red points
+    geom_smooth(method = "lm", color = "blue") +  
+    ggtitle(paste(var1, "vs Score")) +
+    theme_minimal()  
+  
+  p2 <- ggplot(df, aes(x = .data[[var2]], y = Score)) +
+    geom_point(color = "green") +  # Green points
+    geom_smooth(method = "lm", color = "blue") +  
+    ggtitle(paste(var2, "vs Score")) +  
+    theme_minimal()  
+  
+  p3 <- ggplot(df, aes(x = .data[[var3]], y = Score)) +
+    geom_point(color = "purple") +  # Purple points
+    geom_smooth(method = "lm", color = "blue") +  
+    ggtitle(paste(var3, "vs Score")) +  
+    theme_minimal()  
+  
+  grid.arrange(p1, p2, p3, ncol = 3)  
+}
+
+# The three variables that I will plot
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Ambulatory Surgical Center", "Acute Myocardial Infarction", "Coronary Artery Bypass Graft")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Catheter-associated urinary tract infections", "Clostridium difficile Infection", "Central line-associated bloodstream infections")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Complications", "Chronic Obstructive Pulmonary Disease", "Days or Procedure Count")
+
+
+```
+
+
+```{r}
+# I Converted Score to numeric so it can handle the non-numeric values in my data because the last plot was not visible so I had to comment it out in order to fix it.There was alot of "Not Available" data points in my data so I removed them so "Score" was not able to be converted in my above grapgh on the y axis.So this allowed for myself to rerun the plot with better scaling on the y axis.But I still received a warning message about the NA's in the data but I felt they were necessary to see the full aspect of the data being rendered. "Warning: NAs introduced by coercion"
+
+SpaceCeleb_VA_Outcomes$Score <- as.numeric(as.character(SpaceCeleb_VA_Outcomes$Score))
+
+SpaceCeleb_VA_Outcomes <- SpaceCeleb_VA_Outcomes[!is.na(SpaceCeleb_VA_Outcomes$Score), ]
+
+```
+
+
+```{r}
+# Some how I was only able to reproduce one plot so I decided to rename the the columns in order to shorter names for easier plotting
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Ambulatory Surgical Center"] <- "ASC"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Acute Myocardial Infarction"] <- "AMI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Coronary Artery Bypass Graft"] <- "CABG"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Catheter-associated urinary tract infections"] <- "CAUTI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Clostridium difficile Infection"] <- "CDI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Central line-associated bloodstream infections"] <- "CLABSI"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Chronic Obstructive Pulmonary Disease"] <- "COPD"
+colnames(SpaceCeleb_VA_Outcomes)[colnames(SpaceCeleb_VA_Outcomes) == "Days or Procedure Count"] <- "Procedure Days"
+
+# Next I decided to display the three variables in my plot 
+plot_three_variables <- function(data, var1, var2, var3) {
+  p1 <- ggplot(data, aes(x = .data[[var1]], y = Score)) +
+    geom_point(color = "red") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var1, "vs Score")) +
+    theme_minimal()
+  
+  p2 <- ggplot(data, aes(x = .data[[var2]], y = Score)) +
+    geom_point(color = "green") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var2, "vs Score")) +
+    theme_minimal()
+  
+  p3 <- ggplot(data, aes(x = .data[[var3]], y = Score)) +
+    geom_point(color = "purple") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var3, "vs Score")) +
+    theme_minimal()
+  
+  grid.arrange(p1, p2, p3, ncol = 3)
+}
+
+# Now lets plot the new variables that I converted into abbreviations to see the results
+plot_three_variables(SpaceCeleb_VA_Outcomes, "ASC", "AMI", "CABG")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "CAUTI", "CDI", "CLABSI")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Complications", "COPD", "Procedure Days")
+```
+
+
+```{r}
+# The grapgh seems to still be over crowded so lets re plot again with different scalable function of the three variables for more readability on the y-axis
+plot_three_variables <- function(data, var1, var2, var3) {
+  p1 <- ggplot(data, aes(x = .data[[var1]], y = as.numeric(Score))) +
+    geom_point(color = "red") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var1, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  p2 <- ggplot(data, aes(x = .data[[var2]], y = as.numeric(Score))) +
+    geom_point(color = "green") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var2, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  p3 <- ggplot(data, aes(x = .data[[var3]], y = as.numeric(Score))) +
+    geom_point(color = "purple") +
+    geom_smooth(method = "lm", color = "blue") +
+    ggtitle(paste(var3, "vs Score")) +
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 10))
+  
+  grid.arrange(p1, p2, p3, ncol = 3)
+}
+
+# Now lets replot
+plot_three_variables(SpaceCeleb_VA_Outcomes, "ASC", "AMI", "CABG")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "CAUTI", "CDI", "CLABSI")
+plot_three_variables(SpaceCeleb_VA_Outcomes, "Complications", "COPD", "Procedure Days")
+```
+
+
+

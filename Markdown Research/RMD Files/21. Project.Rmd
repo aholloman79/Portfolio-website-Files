@@ -1,0 +1,175 @@
+---
+title: "2. Why estimate f?"
+author: "Avery Holloman"
+date: "2024-08-23"
+output: html_document
+---
+
+```{r}
+library(plotly)
+library(fields)
+library(readxl)
+
+# Load the dataset from the specified path
+warehouse_logistics_analysis <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/warehouse_logistics_analysis.xlsx")
+
+# Define x, y, z variables
+x <- warehouse_logistics_analysis$Shipment_Volume
+y <- warehouse_logistics_analysis$Handling_Time
+z <- warehouse_logistics_analysis$Cost
+
+# Fit a thin plate spline model
+tps_model <- Tps(cbind(x, y), z)
+
+# Create a grid for the TPS model to predict on
+grid_size <- 40  # Increase for finer resolution
+x_grid <- seq(min(x), max(x), length.out = grid_size)
+y_grid <- seq(min(y), max(y), length.out = grid_size)
+grid <- expand.grid(x_grid, y_grid)
+z_pred <- matrix(predict(tps_model, grid), nrow = grid_size, ncol = grid_size)
+
+# Create a 3D plot using plotly
+plot_ly() %>%
+  add_surface(x = ~x_grid, y = ~y_grid, z = ~z_pred, opacity = 0.7, showscale = FALSE) %>%
+  add_markers(x = ~x, y = ~y, z = ~z, marker = list(size = 5, color = 'red')) %>%
+  layout(scene = list(xaxis = list(title = 'Shipment Volume'),
+                      yaxis = list(title = 'Handling Time'),
+                      zaxis = list(title = 'Cost')))
+
+```
+
+
+```{r}
+library(plotly)
+library(fields)
+
+# Assuming your dataset is already loaded in R as 'warehouse_logistics_analysis'
+
+# Define x, y, z
+x <- warehouse_logistics_analysis$Shipment_Volume
+y <- warehouse_logistics_analysis$Handling_Time
+z <- warehouse_logistics_analysis$Cost
+
+# Fit a thin plate spline model
+tps_model <- Tps(cbind(x, y), z)
+
+# Create a grid for the TPS model to predict on
+grid_size <- 40  # Increase for finer resolution
+x_grid <- seq(min(x), max(x), length.out = grid_size)
+y_grid <- seq(min(y), max(y), length.out = grid_size)
+grid <- expand.grid(x_grid, y_grid)
+z_pred <- matrix(predict(tps_model, grid), nrow = grid_size, ncol = grid_size)
+
+# Predict the TPS value for each original data point
+z_pred_points <- predict(tps_model, cbind(x, y))
+
+# Create the 3D plot using plotly
+plot_ly() %>%
+  # Add the TPS surface
+  add_surface(x = ~x_grid, y = ~y_grid, z = ~z_pred, opacity = 0.7, showscale = FALSE) %>%
+  
+  # Add the original points
+  add_markers(x = ~x, y = ~y, z = ~z, 
+              marker = list(size = 4, color = 'red')) %>%
+  
+  # Add lines connecting points to the TPS surface
+  add_segments(x = ~x, y = ~y, z = ~z_pred_points, 
+               xend = ~x, yend = ~y, zend = ~z, 
+               line = list(color = 'black', width = 1)) %>%
+  
+  # Layout adjustments
+  layout(scene = list(xaxis = list(title = 'Shipment Volume'),
+                      yaxis = list(title = 'Handling Time'),
+                      zaxis = list(title = 'Cost')))
+
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+# Load your dataset (assuming it's already available in R)
+# Replace 'your_dataset' with the actual dataset variable name
+data <- warehouse_logistics_analysis
+
+# For this example, we'll use 'Shipment_Volume' as x1 and 'Handling_Time' as x2
+x1 <- data$Shipment_Volume
+x2 <- data$Handling_Time
+
+# Define the center of the neighborhood (you can adjust this if necessary)
+center <- c(mean(x1), mean(x2))  # Center at the mean of your data
+radius <- 0.5  # Example radius, adjust as needed
+
+# Create the left plot
+left_plot <- ggplot(data, aes(x = x1, y = x2)) +
+  geom_point() +
+  geom_point(aes(x = center[1], y = center[2]), color = 'red', size = 3) +
+  annotate("path",
+           x = center[1] + radius * cos(seq(0, 2 * pi, length.out = 100)),
+           y = center[2] + radius * sin(seq(0, 2 * pi, length.out = 100)),
+           color = "red") +
+  geom_vline(xintercept = center[1], linetype = "dotted") +
+  geom_hline(yintercept = center[2], linetype = "dotted") +
+  ggtitle("10% Neighborhood") +
+  xlim(min(x1), max(x1)) +
+  ylim(min(x2), max(x2)) +
+  theme_minimal()
+
+# Function to calculate the radius for a given p and fraction of volume
+calculate_radius <- function(p, fraction) {
+  return(fraction^(1/p))
+}
+
+# Create data for the plot
+fractions <- seq(0, 0.7, by = 0.01)
+p_values <- c(1, 2, 3, 5, 10)
+radius_data <- expand.grid(fraction = fractions, p = p_values)
+radius_data$radius <- mapply(calculate_radius, radius_data$p, radius_data$fraction)
+
+# Create the right plot
+right_plot <- ggplot(radius_data, aes(x = fraction, y = radius, color = as.factor(p))) +
+  geom_line(size = 1) +
+  scale_color_manual(values = c("orange", "green", "cyan", "black", "red")) +
+  labs(x = "Fraction of Volume", y = "Radius", color = "p") +
+  ggtitle("Radius vs. Fraction of Volume") +
+  theme_minimal()
+
+# Combine both plots into one figure
+grid.arrange(left_plot, right_plot, ncol = 2)
+```
+
+```{r}
+# Use your dataset
+data <- warehouse_logistics_analysis
+
+# Define the predictor (x) and response (y) variables
+x <- data$Shipment_Volume
+y <- data$Cost
+
+# Fit a linear model
+linear_model <- lm(y ~ x, data = data)
+
+# Create the plot for the linear model
+linear_plot <- ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  geom_vline(xintercept = mean(data$Shipment_Volume), linetype = "dotted", color = "red") +
+  ggtitle("A linear model") +
+  theme_minimal()
+
+# Fit a quadratic model
+quadratic_model <- lm(y ~ poly(x, 2, raw = TRUE), data = data)
+
+# Create the plot for the quadratic model
+quadratic_plot <- ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE), se = FALSE, color = "blue") +
+  geom_vline(xintercept = mean(data$Shipment_Volume), linetype = "dotted", color = "red") +
+  ggtitle("A quadratic model") +
+  theme_minimal()
+
+# Combine both plots into one figure
+grid.arrange(linear_plot, quadratic_plot, ncol = 1)
+```
+
+
+

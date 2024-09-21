@@ -1,0 +1,88 @@
+---
+title: "Project 48"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(MASS)       # For LDA
+library(ggplot2)    # For plotting
+library(caret)      # For creating confusion matrices
+
+# Load the planetary data
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# Rename columns to shorter names
+colnames(funny_planetary_data) <- c("Planet", "SolarRad", "AtmComp", "DistStar", "Habitability")
+
+# Define the features and response variable using base R subsetting
+features <- funny_planetary_data[, c("SolarRad", "AtmComp", "DistStar")]
+response <- funny_planetary_data$Habitability
+
+# Split the data into training and test sets
+set.seed(123)  # For reproducibility
+train_index <- createDataPartition(response, p = 0.7, list = FALSE)
+train_data <- funny_planetary_data[train_index, ]
+test_data <- funny_planetary_data[-train_index, ]
+
+# Fit a Logistic Regression model
+logistic_model <- glm(Habitability ~ SolarRad + AtmComp + DistStar, 
+                      data = train_data, 
+                      family = binomial)
+
+# Predict on the test data
+test_probabilities <- predict(logistic_model, newdata = test_data, type = "response")
+test_labels <- ifelse(test_probabilities > 0.5, 1, 0)
+
+# Confusion matrix for Logistic Regression
+test_confusion <- table(Predicted = test_labels, Actual = test_data$Habitability)
+print(test_confusion)
+
+# Calculate accuracy for the Logistic Regression model
+test_accuracy <- mean(test_labels == test_data$Habitability)
+print(paste("Test Accuracy:", round(test_accuracy * 100, 2), "%"))
+
+# Plot the Logistic Regression decision boundary
+ggplot(train_data, aes(x = SolarRad, y = AtmComp, color = as.factor(Habitability))) +
+  geom_point(size = 3, alpha = 0.7) +
+  stat_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("dodgerblue", "firebrick")) +
+  labs(title = "Logistic Regression Decision Boundary",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition",
+       color = "Habitability") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+# Fit a simpler Logistic Regression model with just two predictors
+simpler_model <- glm(Habitability ~ SolarRad + AtmComp, 
+                     data = train_data, 
+                     family = binomial)
+
+# Predict on the test data using the simpler model
+simple_test_probabilities <- predict(simpler_model, newdata = test_data, type = "response")
+simple_test_labels <- ifelse(simple_test_probabilities > 0.5, 1, 0)
+
+# Confusion matrix for simpler model
+simple_test_confusion <- table(Predicted = simple_test_labels, Actual = test_data$Habitability)
+print(simple_test_confusion)
+
+# Calculate accuracy for simpler model
+simple_test_accuracy <- mean(simple_test_labels == test_data$Habitability)
+print(paste("Simpler Model Test Accuracy:", round(simple_test_accuracy * 100, 2), "%"))
+
+# Final visualization comparing actual vs predicted habitability
+ggplot(test_data, aes(x = SolarRad, y = AtmComp, color = as.factor(simple_test_labels))) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_manual(values = c("springgreen3", "orangered2")) +
+  labs(title = "Test Data: Actual vs. Predicted Habitability",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition",
+       color = "Predicted Habitability") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+
+```

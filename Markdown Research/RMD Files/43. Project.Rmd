@@ -1,0 +1,110 @@
+---
+title: "Project 43"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(MASS)  # For LDA and QDA
+
+# Load the dataset from your computer
+SpaceCeleb_VA_Outcomes <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gaussian_Discriminant_Analysis_Dataset.xlsx")
+
+# View the first few rows of the dataset
+head(SpaceCeleb_VA_Outcomes)
+
+# Define the variable of interest and the outcome variable
+variable_of_interest <- 'X'  # The variable we're focusing on for GDA
+outcome_variable <- 'Class'  # The outcome variable
+
+# Ensure the outcome variable is a factor
+SpaceCeleb_VA_Outcomes <- SpaceCeleb_VA_Outcomes %>%
+  mutate(
+    !!outcome_variable := as.factor(!!sym(outcome_variable))
+  )
+
+# Gaussian Discriminant Analysis (GDA) on one variable
+gda_model <- lda(as.formula(paste(outcome_variable, "~", variable_of_interest)),
+                 data = SpaceCeleb_VA_Outcomes)
+
+# Print the GDA model summary
+print(gda_model)
+
+# Predict using the GDA model
+gda_predictions <- predict(gda_model)
+
+# Add GDA predictions to the dataset
+SpaceCeleb_VA_Outcomes <- SpaceCeleb_VA_Outcomes %>%
+  mutate(GDA_Prediction = gda_predictions$class)
+
+# Scatter plot for GDA with connecting lines
+ggplot(SpaceCeleb_VA_Outcomes, aes(x = X, y = as.numeric(GDA_Prediction), color = GDA_Prediction)) +
+  geom_point(size = 3, alpha = 0.6) +
+  geom_line(aes(group = 1), color = "black", linetype = "dashed") +  # Connect points with a dashed line
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "GDA Predictions by X with Linear Connection",
+       x = "X",
+       y = "Predicted Class",
+       color = "Predicted Class") +
+  theme(text = element_text(size = 14))
+```
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(MASS)  # For LDA and QDA
+library(viridis)  # For professional color palettes
+
+# Load the dataset from your computer
+SpaceCeleb_VA_Outcomes <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/Gaussian_Discriminant_Analysis_Dataset.xlsx")
+
+# Rename columns to reflect healthcare and medicine
+colnames(SpaceCeleb_VA_Outcomes) <- c("Ivacaftor_Dosage_mg", "Diagnosis", "GDA_Prediction")
+
+# View the first few rows of the dataset
+head(SpaceCeleb_VA_Outcomes)
+
+# Define the variables of interest
+variables_of_interest <- c('Ivacaftor_Dosage_mg')  # You can add more variables here
+outcome_variable <- 'Diagnosis'  # The outcome variable
+
+# Ensure the outcome variable is a factor
+SpaceCeleb_VA_Outcomes <- SpaceCeleb_VA_Outcomes %>%
+  mutate(
+    !!outcome_variable := as.factor(!!sym(outcome_variable))
+  )
+
+# Gaussian Discriminant Analysis (GDA) on multiple variables
+gda_model <- lda(as.formula(paste(outcome_variable, "~", paste(variables_of_interest, collapse = "+"))),
+                 data = SpaceCeleb_VA_Outcomes)
+
+# Print the GDA model summary
+print(gda_model)
+
+# Predict using the GDA model
+gda_predictions <- predict(gda_model)
+
+# Add GDA predictions to the dataset
+SpaceCeleb_VA_Outcomes <- SpaceCeleb_VA_Outcomes %>%
+  mutate(GDA_Prediction = gda_predictions$class)
+
+# Density plot for Ivacaftor Dosage by GDA prediction
+ggplot(SpaceCeleb_VA_Outcomes, aes(x = Ivacaftor_Dosage_mg, fill = as.factor(GDA_Prediction))) +
+  geom_density(alpha = 0.6) +
+  scale_fill_viridis(discrete = TRUE, name = "GDA Prediction") +
+  labs(title = "Density Plot of Ivacaftor Dosage by GDA Prediction",
+       x = "Ivacaftor Dosage (mg)",
+       y = "Density") +
+  theme_minimal() +
+  theme(text = element_text(size = 14))
+
+```
+

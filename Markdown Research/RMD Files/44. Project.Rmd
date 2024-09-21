@@ -1,0 +1,50 @@
+---
+title: "Project 44"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(MASS)
+
+# Load the dataset from your computer
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# View the first few rows of the dataset
+head(funny_planetary_data)
+
+# View the structure of the dataset
+str(funny_planetary_data)
+
+# Fit a Quasi-Poisson regression model based on the instructions from the paper
+quasi_poisson_model <- glm(Habitability ~ SolarRadiation + AtmosphericComposition + DistanceFromStar, 
+                           data = funny_planetary_data, 
+                           family = quasipoisson(link = "log"))
+
+# Summary of the Quasi-Poisson model
+summary(quasi_poisson_model)
+
+# Visualization: Effect of Solar Radiation on Habitability
+ggplot(funny_planetary_data, aes(x = SolarRadiation, y = Habitability)) +
+  geom_point() +
+  stat_smooth(method = "glm", method.args = list(family = quasipoisson(link = "log")), se = FALSE, color = "blue") +
+  labs(title = "Effect of Solar Radiation on Habitability",
+       x = "Solar Radiation",
+       y = "Habitability (Count)") +
+  theme_minimal()
+
+# Visualization: Residuals vs Fitted Values for the Quasi-Poisson Model
+ggplot(funny_planetary_data, aes(x = fitted(quasi_poisson_model), y = residuals(quasi_poisson_model, type = "pearson"))) +
+  geom_point() +
+  geom_smooth(method = "loess", color = "red") +
+  labs(title = "Residuals vs Fitted Values for Quasi-Poisson Model",
+       x = "Fitted Values",
+       y = "Pearson Residuals") +
+  theme_minimal()
+
+```

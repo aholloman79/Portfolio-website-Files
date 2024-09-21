@@ -1,0 +1,84 @@
+---
+title: "Understanding Statistical Learning in the Context of Planetary Research"
+author: "Avery Holloman"
+date: "2024-08-18"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(readxl)
+
+# Read in the dataset
+funny_planetary_data <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/funny_planetary_data.xlsx")
+
+# Scatter Plot of Solar Radiation vs. Habitability
+ggplot(funny_planetary_data, aes(x = SolarRadiation, y = Habitability)) +
+  geom_point() +
+  labs(title = "Habitability vs Solar Radiation",
+       x = "Solar Radiation",
+       y = "Habitability (0 = Non-Habitable, 1 = Habitable)") +
+  theme_minimal()
+
+# Scatter Plot of Distance from Star vs. Habitability
+ggplot(funny_planetary_data, aes(x = DistanceFromStar, y = Habitability)) +
+  geom_point() +
+  labs(title = "Habitability vs Distance from Star",
+       x = "Distance from Star (AU)",
+       y = "Habitability (0 = Non-Habitable, 1 = Habitable)") +
+  theme_minimal()
+
+# Heatmap of Solar Radiation vs. Atmospheric Composition
+ggplot(funny_planetary_data, aes(x = SolarRadiation, y = AtmosphericComposition, fill = Habitability)) +
+  geom_tile() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Solar Radiation vs Atmospheric Composition",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition (%)",
+       fill = "Habitability") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(funny_planetary_data, aes(x = SolarRadiation, y = AtmosphericComposition, color = factor(Habitability))) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("blue", "red"), labels = c("Non-Habitable", "Habitable")) +
+  labs(title = "Solar Radiation vs Atmospheric Composition",
+       x = "Solar Radiation",
+       y = "Atmospheric Composition (%)",
+       color = "Habitability") +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(funny_planetary_data, aes(x = DistanceFromStar, y = Habitability)) +
+  geom_jitter(height = 0.05, width = 0, size = 1.5, color = "blue") +
+  labs(title = "Habitability vs Distance from Star",
+       x = "Distance from Star (AU)",
+       y = "Habitability (0 = Non-Habitable, 1 = Habitable)") +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(funny_planetary_data, aes(x = DistanceFromStar, y = Habitability)) +
+  geom_point(size = 3, alpha = 0.6, color = "blue") +
+  labs(title = "Habitability vs Distance from Star",
+       x = "Distance from Star (AU)",
+       y = "Habitability (0 = Non-Habitable, 1 = Habitable)") +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(funny_planetary_data, aes(x = factor(Habitability), y = DistanceFromStar)) +
+  geom_boxplot(aes(fill = factor(Habitability))) +
+  scale_fill_manual(values = c("red", "green")) +
+  labs(title = "Distance from Star vs Habitability",
+       x = "Habitability (0 = Non-Habitable, 1 = Habitable)",
+       y = "Distance from Star (AU)") +
+  theme_minimal()
+```
+

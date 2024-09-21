@@ -1,0 +1,67 @@
+---
+title: "Project 51"
+author: "Avery Holloman"
+date: "2024-08-26"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(caret)
+library(dplyr)
+library(readxl)
+
+# Load the dataset
+medicare_medicaid_healthcare <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/medicare_medicaid_healthcare.xlsx")
+# Correct Way: Include feature selection within cross-validation
+set.seed(123)
+
+# Define the cross-validation procedure
+train_control_correct <- trainControl(method = "cv", number = 10, selectionFunction = "best")
+
+# Fit the logistic regression model, performing feature selection within each fold
+model_correct <- train(
+  Medicare_Eligibility ~ .,
+  data = medicare_medicaid_healthcare,
+  method = "glm",
+  family = binomial(),
+  trControl = train_control_correct,
+  preProcess = c("center", "scale"),
+  tuneLength = 10
+)
+
+# Extract cross-validation results
+cv_results_correct <- model_correct$resample
+
+# Plot cross-validation accuracy with enhanced colors
+ggplot(cv_results_correct, aes(x = Resample, y = Accuracy)) +
+  geom_point(color = "#2ca02c", size = 3) +  # Green for correct method
+  geom_line(color = "#2ca02c", size = 1) +
+  ggtitle("Correct Cross-Validation (Feature Selection Inside CV)") +
+  xlab("Fold") +
+  ylab("Accuracy") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```
+
+
+```{r}
+# Create a colorful histogram of the Age variable
+ggplot(medicare_medicaid_healthcare, aes(x = Age)) +
+  geom_histogram(binwidth = 5, fill = "#1f77b4", color = "white", alpha = 0.7) +  # Blue bars with white borders
+  scale_fill_brewer(palette = "Set3") +  # Apply a colorful palette
+  ggtitle("Distribution of Age in Medicare Medicaid Healthcare Dataset") +
+  xlab("Age") +
+  ylab("Frequency") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12)
+  )
+```

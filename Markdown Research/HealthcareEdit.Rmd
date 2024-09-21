@@ -1,0 +1,602 @@
+---
+title: "Healthcare"
+author: "Avery Holloman"
+date: "2024-08-20"
+output: html_document
+---
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(anomalize)
+library(tibbletime)
+library(ggplot2)
+
+# Create a Date column assuming the data represents monthly records starting from January 2020
+data <- data %>% 
+  mutate(Date = seq(as.Date("2020-01-01"), by = "month", length.out = n()))
+
+# Convert the data to a tibble
+data_tbl <- as_tibble(data)
+
+# Convert to a time-based tibble
+data_time_tbl <- data_tbl %>%
+  as_tbl_time(index = Date)
+
+# Perform anomaly detection on the 'Blood_Pressure_mmHg' column
+anomaly_detection <- data_time_tbl %>%
+  time_decompose(Blood_Pressure_mmHg, method = "stl") %>%
+  anomalize(remainder, method = "iqr") %>%
+  time_recompose()
+
+# Plot the anomalies
+plot_anomalies(anomaly_detection)
+
+```
+```{r}
+# Load necessary library
+library(cluster)
+library(ggplot2)
+
+# K-means clustering based on 'Blood_Pressure_mmHg' and 'Cholesterol_mg_dL'
+set.seed(123)
+kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = 5)
+
+# Plot K-means result
+ggplot(data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(kmeans_result$cluster))) +
+  geom_point(size = 3) +
+  geom_point(data = as.data.frame(kmeans_result$centers), aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL), color = "black", size = 5, shape = 4) +
+  ggtitle("K-means - 5 Prototypes per Class")
+```
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(MASS) # For Bayes decision boundary
+
+# K-means clustering based on 'Blood_Pressure_mmHg' and 'Cholesterol_mg_dL'
+set.seed(123)
+kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = 5)
+
+# Create a grid of points spanning the feature space
+x_min <- min(data$Blood_Pressure_mmHg) - 10
+x_max <- max(data$Blood_Pressure_mmHg) + 10
+y_min <- min(data$Cholesterol_mg_dL) - 10
+y_max <- max(data$Cholesterol_mg_dL) + 10
+
+grid <- expand.grid(Blood_Pressure_mmHg = seq(x_min, x_max, length.out = 100),
+                    Cholesterol_mg_dL = seq(y_min, y_max, length.out = 100))
+
+# Function to assign each point in the grid to the nearest cluster center
+assign_cluster <- function(x, centers) {
+  distances <- apply(centers, 1, function(center) sqrt(sum((x - center)^2)))
+  return(which.min(distances))
+}
+
+# Assign each grid point to the nearest cluster
+grid$cluster <- apply(grid, 1, assign_cluster, centers = kmeans_result$centers)
+grid$cluster <- as.factor(grid$cluster)
+
+# Estimate the Bayes decision boundary using linear discriminant analysis
+lda_model <- lda(cluster ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data.frame(data, cluster = kmeans_result$cluster))
+grid$decision_boundary <- predict(lda_model, grid)$class
+
+# Plot K-means result with decision boundary
+ggplot(data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(kmeans_result$cluster))) +
+  geom_point(size = 3) +
+  geom_point(data = as.data.frame(kmeans_result$centers), aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL), color = "black", size = 5, shape = 4) +
+  geom_contour(data = grid, aes(z = as.numeric(decision_boundary)), bins = 5, color = "blue", linetype = "dashed") +
+  ggtitle("K-means Clustering with Bayes Decision Boundary") +
+  scale_color_discrete(name = "Cluster")
+
+```
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(mclust) # For Gaussian Mixture Model and EM algorithm
+library(MASS)   # For Bayes decision boundary
+
+# Generate synthetic data if not already present
+set.seed(123)
+data <- data.frame(
+  Blood_Pressure_mmHg = rnorm(300, mean = rep(120:160, each = 100), sd = 10),
+  Cholesterol_mg_dL = rnorm(300, mean = rep(150:190, each = 100), sd = 15)
+)
+
+# K-means clustering
+kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = 5)
+
+# Assign cluster to each grid point for the K-means model
+x_min <- min(data$Blood_Pressure_mmHg) - 10
+x_max <- max(data$Blood_Pressure_mmHg) + 10
+y_min <- min(data$Cholesterol_mg_dL) - 10
+y_max <- max(data$Cholesterol_mg_dL) + 10
+
+grid <- expand.grid(Blood_Pressure_mmHg = seq(x_min, x_max, length.out = 100),
+                    Cholesterol_mg_dL = seq(y_min, y_max, length.out = 100))
+
+assign_cluster <- function(x, centers) {
+  distances <- apply(centers, 1, function(center) sqrt(sum((x - center)^2)))
+  return(which.min(distances))
+}
+
+grid$kmeans_cluster <- apply(grid, 1, assign_cluster, centers = kmeans_result$centers)
+grid$kmeans_cluster <- as.factor(grid$kmeans_cluster)
+
+# Fit Gaussian Mixture Model (GMM) without explicit initialization
+gmm_result <- Mclust(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], G = 5)
+
+# Assign cluster to each grid point for the GMM model
+grid$gmm_cluster <- predict(gmm_result, newdata = grid[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")])$classification
+grid$gmm_cluster <- as.factor(grid$gmm_cluster)
+
+# Estimate Bayes decision boundary using LDA for the GMM clusters
+lda_model <- lda(gmm_cluster ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = grid)
+grid$decision_boundary <- predict(lda_model, grid)$class
+
+# Plot the results in a two-panel figure
+
+# Upper panel: K-means clustering with piecewise linear decision boundaries
+p1 <- ggplot(data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(kmeans_result$cluster))) +
+  geom_point(size = 3) +
+  geom_point(data = as.data.frame(kmeans_result$centers), aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL), color = "black", size = 5, shape = 4) +
+  geom_contour(data = grid, aes(z = as.numeric(kmeans_cluster)), bins = 5, color = "blue", linetype = "dashed") +
+  ggtitle("K-means Clustering with Piecewise Linear Decision Boundaries") +
+  scale_color_discrete(name = "Cluster") +
+  theme_minimal()
+
+# Lower panel: GMM clustering with Bayes decision boundary
+p2 <- ggplot(data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(gmm_result$classification))) +
+  geom_point(size = 3) +
+  geom_contour(data = grid, aes(z = as.numeric(decision_boundary)), color = "purple", linetype = "dotted") +
+  ggtitle("GMM with Common Covariance and Bayes Decision Boundary") +
+  scale_color_discrete(name = "Cluster") +
+  theme_minimal()
+
+# Combine the plots into a two-panel figure
+library(gridExtra)
+grid.arrange(p1, p2, ncol = 1)
+
+```
+
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(class)  # For k-NN classification
+library(MASS)   # For Bayes decision boundary
+
+# Generate synthetic data if not already present
+set.seed(123)
+data <- data.frame(
+  Blood_Pressure_mmHg = rnorm(300, mean = rep(120:160, each = 100), sd = 10),
+  Cholesterol_mg_dL = rnorm(300, mean = rep(150:190, each = 100), sd = 15)
+)
+
+# K-means clustering (for later comparison)
+kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = 5)
+
+# K-NN classification
+k <- 5  # Number of neighbors
+grid <- expand.grid(Blood_Pressure_mmHg = seq(min(data$Blood_Pressure_mmHg) - 10, max(data$Blood_Pressure_mmHg) + 10, length.out = 100),
+                    Cholesterol_mg_dL = seq(min(data$Cholesterol_mg_dL) - 10, max(data$Cholesterol_mg_dL) + 10, length.out = 100))
+
+# Use the k-NN algorithm to classify each point in the grid
+knn_result <- knn(train = data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], 
+                  test = grid, 
+                  cl = kmeans_result$cluster, 
+                  k = k)
+
+grid$knn_cluster <- as.factor(knn_result)
+
+# Estimate Bayes decision boundary using LDA for the k-NN clusters
+lda_model <- lda(knn_cluster ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = grid)
+grid$decision_boundary <- predict(lda_model, grid)$class
+
+# Plot the results in a two-panel figure
+
+# Upper panel: k-NN classification with decision boundaries
+p1 <- ggplot() +
+  geom_point(data = data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(kmeans_result$cluster)), size = 3) +
+  geom_contour(data = grid, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, z = as.numeric(knn_cluster)), color = "blue", linetype = "dashed") +
+  ggtitle("k-NN Classification with Decision Boundaries") +
+  scale_color_discrete(name = "Cluster") +
+  theme_minimal()
+
+# Lower panel: Bayes decision boundary overlay
+p2 <- ggplot() +
+  geom_point(data = data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = as.factor(kmeans_result$cluster)), size = 3) +
+  geom_contour(data = grid, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, z = as.numeric(decision_boundary)), color = "purple", linetype = "dotted") +
+  ggtitle("Bayes Decision Boundary") +
+  scale_color_discrete(name = "Cluster") +
+  theme_minimal()
+
+# Combine the plots into a two-panel figure
+library(gridExtra)
+grid.arrange(p1, p2, ncol = 1)
+
+```
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(class)  # For k-NN classification
+library(caret)  # For cross-validation
+library(MASS)   # For Bayes decision boundary
+
+# Generate synthetic two-class mixture data if not already present
+set.seed(123)
+data <- data.frame(
+  Blood_Pressure_mmHg = rnorm(300, mean = rep(120:160, each = 100), sd = 10),
+  Cholesterol_mg_dL = rnorm(300, mean = rep(150:190, each = 100), sd = 15),
+  Class = as.factor(rep(1:2, each = 150))
+)
+
+# Function to compute misclassification error for different values of k
+calculate_knn_cv_error <- function(k) {
+  train_control <- trainControl(method = "cv", number = 10)
+  knn_model <- train(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data, method = "knn",
+                     trControl = train_control, tuneGrid = data.frame(.k = k))
+  return(knn_model$results)
+}
+
+# Evaluate misclassification error for different values of k (1 to 15)
+k_values <- 1:15
+cv_results <- do.call(rbind, lapply(k_values, calculate_knn_cv_error))
+
+# Upper panel: Plot misclassification error as a function of k
+p1 <- ggplot(cv_results, aes(x = k, y = Accuracy, ymin = Accuracy - (AccuracySD), ymax = Accuracy + (AccuracySD))) +
+  geom_errorbar(width = 0.2) +
+  geom_line() +
+  geom_point() +
+  scale_y_reverse() +
+  labs(title = "Misclassification Error as a Function of k",
+       x = "Number of Neighbors (k)",
+       y = "Misclassification Error (1 - Accuracy)") +
+  theme_minimal()
+
+# Lower panel: Decision boundary for k=7 with Bayes decision boundary
+k_optimal <- 7
+grid <- expand.grid(Blood_Pressure_mmHg = seq(min(data$Blood_Pressure_mmHg) - 10, max(data$Blood_Pressure_mmHg) + 10, length.out = 100),
+                    Cholesterol_mg_dL = seq(min(data$Cholesterol_mg_dL) - 10, max(data$Cholesterol_mg_dL) + 10, length.out = 100))
+
+knn_result <- knn(train = data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], 
+                  test = grid, 
+                  cl = data$Class, 
+                  k = k_optimal)
+
+grid$knn_cluster <- as.factor(knn_result)
+
+# Estimate Bayes decision boundary using LDA
+lda_model <- lda(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data)
+grid$decision_boundary <- predict(lda_model, grid)$class
+
+# Lower panel: Plot decision boundary for k=7
+p2 <- ggplot() +
+  geom_point(data = data, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, color = Class), size = 3) +
+  geom_contour(data = grid, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, z = as.numeric(knn_cluster)), color = "blue", linetype = "dashed") +
+  geom_contour(data = grid, aes(x = Blood_Pressure_mmHg, y = Cholesterol_mg_dL, z = as.numeric(decision_boundary)), color = "purple", linetype = "dotted") +
+  ggtitle("Decision Boundary for k = 7 with Bayes Decision Boundary") +
+  scale_color_discrete(name = "Class") +
+  theme_minimal()
+
+# Combine the plots into a two-panel figure
+library(gridExtra)
+grid.arrange(p1, p2, ncol = 1)
+```
+
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(class)  # For k-NN classification
+library(caret)  # For cross-validation and LVQ
+library(MASS)   # For Bayes decision boundary
+library(purrr)  # For map functions
+
+# Generate "easy" and "difficult" datasets
+generate_data <- function(difficulty) {
+  set.seed(123)
+  if (difficulty == "easy") {
+    data <- data.frame(
+      Blood_Pressure_mmHg = rnorm(300, mean = rep(120:160, each = 100), sd = 8),
+      Cholesterol_mg_dL = rnorm(300, mean = rep(150:190, each = 100), sd = 10),
+      Class = as.factor(rep(1:2, each = 150))
+    )
+  } else {  # "difficult"
+    data <- data.frame(
+      Blood_Pressure_mmHg = rnorm(300, mean = 140, sd = 15),
+      Cholesterol_mg_dL = rnorm(300, mean = 170, sd = 20),
+      Class = as.factor(sample(1:2, 300, replace = TRUE))
+    )
+  }
+  return(data)
+}
+
+# Function to compute misclassification error for k-NN, K-means, and LVQ
+calculate_errors <- function(data) {
+  set.seed(123)
+  
+  # k-NN
+  train_control <- trainControl(method = "cv", number = 10)
+  knn_model <- train(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data, method = "knn",
+                     trControl = train_control, tuneGrid = data.frame(.k = 7))
+  knn_error <- 1 - max(knn_model$results$Accuracy)
+  
+  # K-means
+  kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = 2)
+  kmeans_pred <- as.factor(ifelse(kmeans_result$cluster == 1, "1", "2"))
+  kmeans_error <- mean(kmeans_pred != data$Class)
+  
+  # LVQ using caret
+  lvq_model <- train(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data, method = "lvq",
+                     trControl = train_control)
+  lvq_error <- 1 - max(lvq_model$results$Accuracy)
+  
+  return(c(knn_error, kmeans_error, lvq_error))
+}
+
+# Perform 10 realizations for both "easy" and "difficult" datasets
+errors_easy <- replicate(10, calculate_errors(generate_data("easy")))
+errors_difficult <- replicate(10, calculate_errors(generate_data("difficult")))
+
+# Calculate Mean ± Standard Error for each method
+error_stats <- function(errors) {
+  mean_errors <- rowMeans(errors)
+  se_errors <- apply(errors, 1, sd) / sqrt(ncol(errors))
+  return(data.frame(
+    Method = c("k-NN", "K-means", "LVQ"),
+    Mean = mean_errors,
+    SE = se_errors
+  ))
+}
+
+error_stats_easy <- error_stats(errors_easy)
+error_stats_difficult <- error_stats(errors_difficult)
+
+# Add problem type information
+error_stats_easy$Problem <- "Easy"
+error_stats_difficult$Problem <- "Difficult"
+
+# Combine the results
+error_stats_combined <- rbind(error_stats_easy, error_stats_difficult)
+
+# Plot the results
+ggplot(error_stats_combined, aes(x = Method, y = Mean, fill = Method)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
+  geom_errorbar(aes(ymin = Mean - SE, ymax = Mean + SE), position = position_dodge(0.7), width = 0.25) +
+  facet_wrap(~ Problem) +
+  labs(title = "Mean ± One Standard Error of Misclassification Error",
+       y = "Misclassification Error",
+       x = "Method") +
+  scale_fill_manual(values = c("k-NN" = "green", "K-means" = "blue", "LVQ" = "red")) +
+  theme_minimal()
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(cluster)
+library(ggplot2)
+library(class)  # For k-NN classification
+library(caret)  # For LVQ and K-means through training
+library(MASS)
+library(gridExtra)
+
+# Generate "easy" and "difficult" datasets
+generate_data <- function(difficulty) {
+  set.seed(123)
+  if (difficulty == "easy") {
+    data <- data.frame(
+      Blood_Pressure_mmHg = rnorm(300, mean = rep(120:160, each = 100), sd = 8),
+      Cholesterol_mg_dL = rnorm(300, mean = rep(150:190, each = 100), sd = 10),
+      Class = as.factor(rep(1:2, each = 150))
+    )
+  } else {
+    data <- data.frame(
+      Blood_Pressure_mmHg = rnorm(300, mean = 140, sd = 15),
+      Cholesterol_mg_dL = rnorm(300, mean = 170, sd = 20),
+      Class = as.factor(sample(1:2, 300, replace = TRUE))
+    )
+  }
+  return(data)
+}
+
+# Function to calculate k-NN misclassification errors
+calculate_knn_errors <- function(data, k_values) {
+  errors <- sapply(k_values, function(k) {
+    knn_model <- train(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data, method = "knn",
+                       trControl = trainControl(method = "cv", number = 10),
+                       tuneGrid = data.frame(.k = k))
+    return(1 - max(knn_model$results$Accuracy))
+  })
+  return(errors)
+}
+
+# Function to calculate K-means misclassification errors
+calculate_kmeans_errors <- function(data, proto_values) {
+  errors <- sapply(proto_values, function(proto) {
+    kmeans_result <- kmeans(data[, c("Blood_Pressure_mmHg", "Cholesterol_mg_dL")], centers = proto)
+    cluster_assignment <- as.factor(ifelse(kmeans_result$cluster == 1, "1", "2"))
+    return(mean(cluster_assignment != data$Class))
+  })
+  return(errors)
+}
+
+# Function to calculate LVQ misclassification errors
+calculate_lvq_errors <- function(data, proto_values) {
+  errors <- sapply(proto_values, function(proto) {
+    lvq_model <- train(Class ~ Blood_Pressure_mmHg + Cholesterol_mg_dL, data = data, method = "lvq",
+                       trControl = trainControl(method = "cv", number = 10),
+                       tuneGrid = data.frame(size = proto, k = 5))
+    return(1 - max(lvq_model$results$Accuracy))
+  })
+  return(errors)
+}
+
+# Define the values to test
+k_values <- seq(1, 60, by = 5)
+proto_values <- seq(5, 30, by = 5)
+
+# Generate datasets
+data_easy <- generate_data("easy")
+data_difficult <- generate_data("difficult")
+
+# Calculate errors
+knn_errors_easy <- calculate_knn_errors(data_easy, k_values)
+knn_errors_difficult <- calculate_knn_errors(data_difficult, k_values)
+
+kmeans_errors_easy <- calculate_kmeans_errors(data_easy, proto_values)
+kmeans_errors_difficult <- calculate_kmeans_errors(data_difficult, proto_values)
+
+lvq_errors_easy <- calculate_lvq_errors(data_easy, proto_values)
+lvq_errors_difficult <- calculate_lvq_errors(data_difficult, proto_values)
+
+# Create plots
+p1 <- ggplot(data.frame(k_values, knn_errors_easy), aes(x = k_values, y = knn_errors_easy)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  ggtitle("Nearest Neighbors / Easy") +
+  xlab("Number of Neighbors") +
+  ylab("Misclassification Error") +
+  ylim(0, 0.6) +
+  theme_minimal()
+
+p2 <- ggplot(data.frame(proto_values, kmeans_errors_easy, lvq_errors_easy), aes(x = proto_values)) +
+  geom_line(aes(y = kmeans_errors_easy), color = "blue") +
+  geom_point(aes(y = kmeans_errors_easy), color = "blue") +
+  geom_line(aes(y = lvq_errors_easy), color = "red") +
+  geom_point(aes(y = lvq_errors_easy), color = "red") +
+  ggtitle("K-means & LVQ / Easy") +
+  xlab("Number of Prototypes per Class") +
+  ylab("Misclassification Error") +
+  ylim(0, 0.6) +
+  theme_minimal()
+
+p3 <- ggplot(data.frame(k_values, knn_errors_difficult), aes(x = k_values, y = knn_errors_difficult)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  ggtitle("Nearest Neighbors / Difficult") +
+  xlab("Number of Neighbors") +
+  ylab("Misclassification Error") +
+  ylim(0, 0.6) +
+  theme_minimal()
+
+p4 <- ggplot(data.frame(proto_values, kmeans_errors_difficult, lvq_errors_difficult), aes(x = proto_values)) +
+  geom_line(aes(y = kmeans_errors_difficult), color = "blue") +
+  geom_point(aes(y = kmeans_errors_difficult), color = "blue") +
+  geom_line(aes(y = lvq_errors_difficult), color = "red") +
+  geom_point(aes(y = lvq_errors_difficult), color = "red") +
+  ggtitle("K-means & LVQ / Difficult") +
+  xlab("Number of Prototypes per Class") +
+  ylab("Misclassification Error") +
+  ylim(0, 0.6) +
+  theme_minimal()
+
+# Arrange the plots in a 2x2 grid
+grid.arrange(p1, p2, p3, p4, ncol = 2)
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(class)  # For k-NN classification
+library(gridExtra)
+library(tidyr)  # For pivot_longer
+
+# Simulate LANDSAT spectral band data (for demonstration)
+set.seed(123)
+n <- 100  # Size of the grid (e.g., 100x100)
+spectral_band1 <- matrix(runif(n * n, min = 0, max = 1), nrow = n)
+spectral_band2 <- matrix(runif(n * n, min = 0, max = 1), nrow = n)
+spectral_band3 <- matrix(runif(n * n, min = 0, max = 1), nrow = n)
+spectral_band4 <- matrix(runif(n * n, min = 0, max = 1), nrow = n)
+
+# Simulate actual land usage (classes)
+actual_land_usage <- matrix(sample(1:4, n * n, replace = TRUE), nrow = n)
+
+# Combine spectral bands into a data frame for k-NN classification
+data <- data.frame(
+  Band1 = as.vector(spectral_band1),
+  Band2 = as.vector(spectral_band2),
+  Band3 = as.vector(spectral_band3),
+  Band4 = as.vector(spectral_band4),
+  LandUsage = as.factor(as.vector(actual_land_usage))
+)
+
+# Use 5-nearest-neighbor classifier to predict land usage
+predicted_land_usage <- knn(train = data[, 1:4], test = data[, 1:4], cl = data$LandUsage, k = 5)
+
+# Convert predicted and actual land usage into matrices for plotting
+predicted_land_usage_matrix <- matrix(as.numeric(predicted_land_usage), nrow = n)
+
+# Helper function to convert a matrix to a data frame suitable for ggplot
+matrix_to_df <- function(mat, name) {
+  df <- as.data.frame(mat)
+  df$row <- 1:nrow(df)
+  df <- pivot_longer(df, cols = -row, names_to = "col", values_to = name)
+  df$col <- as.integer(gsub("V", "", df$col))
+  return(df)
+}
+
+# Convert matrices to data frames for plotting
+df_band1 <- matrix_to_df(spectral_band1, "value")
+df_band2 <- matrix_to_df(spectral_band2, "value")
+df_band3 <- matrix_to_df(spectral_band3, "value")
+df_band4 <- matrix_to_df(spectral_band4, "value")
+df_actual <- matrix_to_df(actual_land_usage, "value")
+df_predicted <- matrix_to_df(predicted_land_usage_matrix, "value")
+
+# Plotting the spectral bands as heatmaps
+p1 <- ggplot(df_band1, aes(x = col, y = row, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  ggtitle("Spectral Band 1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+p2 <- ggplot(df_band2, aes(x = col, y = row, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  ggtitle("Spectral Band 2") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+p3 <- ggplot(df_band3, aes(x = col, y = row, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  ggtitle("Spectral Band 3") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+p4 <- ggplot(df_band4, aes(x = col, y = row, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  ggtitle("Spectral Band 4") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+# Plotting actual and predicted land usage
+p5 <- ggplot(df_actual, aes(x = col, y = row, fill = as.factor(value))) +
+  geom_tile() +
+  scale_fill_manual(values = c("#FF0000", "#00FF00", "#0000FF", "#FFFF00")) +
+  ggtitle("Actual Land Usage") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+p6 <- ggplot(df_predicted, aes(x = col, y = row, fill = as.factor(value))) +
+  geom_tile() +
+  scale_fill_manual(values = c("#FF0000", "#00FF00", "#0000FF", "#FFFF00")) +
+  ggtitle("Predicted Land Usage (5-NN)") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.title = element_blank())
+
+# Arrange the plots in a grid
+grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 3)
+
+```
+
+

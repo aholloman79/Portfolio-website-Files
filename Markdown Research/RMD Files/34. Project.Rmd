@@ -1,0 +1,73 @@
+---
+title: "Project 34"
+author: "Avery Holloman"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+dataset <- read_excel("C:/Users/jacob/OneDrive/Desktop/R Studio Projects 2024/Datasets/healthcare.xlsx")
+
+# For simplicity, let's assume we're predicting 'Dosage_Med1_mg' based on 'Age', 'Gender', and 'BMI'
+dataset <- dataset %>%
+  filter(!is.na(Age) & !is.na(Dosage_Med1_mg) & !is.na(Gender) & !is.na(BMI))
+
+# Convert 'Gender' to a factor
+dataset$Gender <- as.factor(dataset$Gender)
+
+# Fit a multiple linear regression model
+multiple_model <- lm(Dosage_Med1_mg ~ Age + Gender + BMI, data = dataset)
+
+# Summary of the model to interpret coefficients
+summary(multiple_model)
+
+# Predict values using the fitted model
+dataset$predicted_dosage <- predict(multiple_model, dataset)
+
+# Plot actual vs predicted values
+ggplot(dataset, aes(x = predicted_dosage, y = Dosage_Med1_mg)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Actual vs Predicted Dosage",
+       x = "Predicted Dosage of Medication (mg)",
+       y = "Actual Dosage of Medication (mg)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Residuals plot to assess the fit
+ggplot(dataset, aes(x = predicted_dosage, y = Dosage_Med1_mg - predicted_dosage)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values (Multiple Linear Regression)",
+       x = "Fitted Values (Predicted Dosage)",
+       y = "Residuals") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Calculate correlations between predictors
+correlation_matrix <- cor(dataset %>% select(Age, BMI), use = "complete.obs")
+correlation_matrix
+
+# Visualize the correlation matrix
+corr_plot <- reshape2::melt(correlation_matrix)
+ggplot(corr_plot, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  geom_text(aes(label = round(value, 2)), color = "white") +
+  labs(title = "Correlation Matrix of Predictors",
+       x = "Predictor",
+       y = "Predictor",
+       fill = "Correlation") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Check for multicollinearity using Variance Inflation Factor (VIF)
+library(car)
+vif(multiple_model)
+```
+

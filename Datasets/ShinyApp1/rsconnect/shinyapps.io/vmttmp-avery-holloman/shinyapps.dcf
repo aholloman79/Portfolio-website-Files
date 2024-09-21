@@ -1,0 +1,10 @@
+name: shinyapps
+title:
+username: vmttmp-avery-holloman
+account: vmttmp-avery-holloman
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12514871
+bundleId: 9022480
+url: https://vmttmp-avery-holloman.shinyapps.io/shinyapps/
+version: 1
